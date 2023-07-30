@@ -29,7 +29,9 @@ app.use("/docs", swaggerUi.serve, swaggerUi.setup(specs, { explorer: true }));
 
 // connect to db
 mongoose
-    .connect(process.env.MONGO_URI)
+    .connect(process.env.MONGO_URI, {
+        dbName: process.env.DB_NAME
+    })
     .then(() => {
         console.log("connected to database");
         // listen to port
