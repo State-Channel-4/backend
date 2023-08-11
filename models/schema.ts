@@ -1,6 +1,15 @@
-const mongoose = require('mongoose');
+import mongoose, { Schema, Document } from 'mongoose';
 
-const UserSchema = new mongoose.Schema({
+interface IUser extends Document {
+  walletAddress: string;
+  likedUrls: Array<mongoose.Types.ObjectId>;
+  submittedUrls: Array<mongoose.Types.ObjectId>;
+  createdAt: Date;
+  updatedAt: Date;
+  syncedToBlockchain: boolean;
+}
+
+const UserSchema: Schema<IUser> = new Schema({
   walletAddress: {
     type: String,
     required: true,
@@ -28,9 +37,20 @@ const UserSchema = new mongoose.Schema({
   }
 });
 
-const User = mongoose.model('User', UserSchema)
+const User = mongoose.model<IUser>('User', UserSchema);
 
-const URLSchema = new mongoose.Schema({
+interface IURL extends Document {
+  title: string;
+  url: string;
+  submittedBy: mongoose.Types.ObjectId;
+  likes: number;
+  tags: Array<mongoose.Types.ObjectId>;
+  createdAt: Date;
+  updatedAt: Date;
+  syncedToBlockchain: boolean;
+}
+
+const URLSchema: Schema<IURL> = new Schema({
   title: {
     type: String,
     required: true
@@ -67,9 +87,16 @@ const URLSchema = new mongoose.Schema({
   }
 });
 
-const Url = mongoose.model('Url', URLSchema)
+const Url = mongoose.model<IURL>('Url', URLSchema);
 
-const TagSchema = new mongoose.Schema({
+interface ITag extends Document {
+  name: string;
+  urls: Array<mongoose.Types.ObjectId>;
+  createdBy: mongoose.Types.ObjectId;
+  syncedToBlockchain: boolean;
+}
+
+const TagSchema: Schema<ITag> = new Schema({
   name: {
     type: String,
     required: true,
@@ -90,10 +117,6 @@ const TagSchema = new mongoose.Schema({
   }
 });
 
-const Tag = mongoose.model('Tag', TagSchema)
+const Tag = mongoose.model<ITag>('Tag', TagSchema);
 
-module.exports = {
-  User: User,
-  Tag: Tag,
-  Url: Url
-};
+export { User, Url, Tag };
