@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { ethers, utils } from "ethers";
-
+import { ethers } from 'ethers';
 import jwt from "jsonwebtoken";
 import expressJwt from "express-jwt";
 import dotenv from "dotenv";
@@ -27,7 +26,7 @@ const verifySignedMessage = async (
         const { address, signature, originalMessage } = req.body;
 
         // Recover the address from the signature
-        const recoveredAddress = utils.verifyMessage(
+        const recoveredAddress = ethers.verifyMessage(
             originalMessage,
             signature
         );

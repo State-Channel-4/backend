@@ -1,20 +1,22 @@
-const ethers = require('ethers')
-require('dotenv').config()
+import { ethers } from 'ethers';
+import { Request, Response, NextFunction } from "express";
+import dotenv from "dotenv";
 
 // Models
-const { User, Tag, Url } = require('../models/schema');
+import { User, Tag, Url } from '../models/schema';
+// auth middleware
+import { generateToken } from '../middleware/auth';
 
-const { generateToken } = require('../middleware/auth');
 
+const create_contract = (): ethers.Contract => {
+    const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
+    const contract = new ethers.Contract(process.env.CONTRACT_ADDRESS ?? "", process.env.ABI ?? [], provider);
+    return contract;
+};
 
-const create_contract = () => {
-    const provider = new ethers.JsonRpcProvider(process.env.RPC_URL)
-    const contract = new ethers.Contract(process.env.CONTRACT_ADDRESS, process.env.ABI, provider)
-    return contract
-}
 
 // create user
-const create_user = async(req, res) => {
+const create_user = async(req: Request, res: Response): Promise<void> => {
   const {address} = req.body
   try {
     const user = await User.create({walletAddress: address})
@@ -23,16 +25,16 @@ const create_user = async(req, res) => {
       user: user,
       token,
     })
-  } catch (error) {
+  } catch (error: any) { // Explicitly type 'error' as 'any'
     res.status(400).json({ error: error.message })
   }
 }
 
 // get all users
-const get_all_users = async (req, res) => {
+const get_all_users = async (req: Request, res: Response) => {
   try {
-    const page = parseInt(req.query.page) || 1; // Get the page number from query parameters, default to 1 if not provided
-    const limit = parseInt(req.query.limit) || 100; // Get the limit from query parameters, default to 100 if not provided
+    const page: number = parseInt(req.query.page as string) || 1; // Get the page number from query parameters, default to 1 if not provided
+    const limit: number = parseInt(req.query.limit as string) || 100; // Get the limit from query parameters, default to 100 if not provided
 
     const [users, count] = await Promise.all([
       User.find()
@@ -55,11 +57,11 @@ const get_all_users = async (req, res) => {
 
 
 // login
-const login = async(req, res) => {
+const login = async(req: Request, res: Response) => {
   try{
     const {signedMessage} = req.body
 
-    const message = process.env.LOGIN_SECRET;
+    const message: string = process.env.LOGIN_SECRET ?? "";
     const signer = ethers.verifyMessage(message, signedMessage);
     const user = await User.findOne({walletAddress: signer })
     if (!user) {
@@ -69,7 +71,7 @@ const login = async(req, res) => {
     const token = generateToken(user)
     console.log("token : ", token)
     return res.status(200).json({user: user, token: token})
-  } catch(error) {
+  } catch(error: any) {
     return res.status(500).json({error : error.message})
   }
 }
@@ -85,19 +87,19 @@ const login = async(req, res) => {
  * localhost:4000/api/user:/123
  * }
  */
-const get_specific_user = async(req, res) => {
+const get_specific_user = async(req: Request, res: Response) => {
   console.log("get user by id : ", req.params.id)
   try {
     const user = await User.findById(req.params.id)
     res.status(200).json({user: user})
-  } catch(error) {
+  } catch(error: any) {
     res.status(400).json({error: error.message})
   }
 }
 
 
 // recover using mnemonic phrase
-const recover_account = async(req, res) => {
+const recover_account = async(req: Request, res: Response) => {
     const { mnemonic } = req.body
     try {
         console.log("mnemonic : ", mnemonic)
@@ -107,14 +109,14 @@ const recover_account = async(req, res) => {
                               public_key: mnemonicWallet.publicKey,
                               private_key: mnemonicWallet.privateKey},
                               )
-    } catch(error) {
+    } catch(error: any) {
         res.status(400).json({error: error.message})
     }
 
 }
 
 // PUT toogle likes like or unlike
-const toggleLike = async (req, res) => {
+const toggleLike = async (req: Request, res: Response) => {
   try {
     const url_id = req.params.id
     const { address } = req.body
@@ -160,7 +162,7 @@ const toggleLike = async (req, res) => {
  }
  */
 // like or unlike url
-const like = async (req, res) => {
+const like = async (req: Request, res: Response) => {
   const {id} = req.params
   console.log("id : ", id)
   console.log("body : ", req.body)
@@ -182,7 +184,7 @@ const like = async (req, res) => {
   "tags": []
  }
  */
- const submit_url = async(req, res) => {
+ const submit_url = async(req: Request, res: Response) => {
   try {
     const title = req.body.params[0];
     const url = req.body.params[1];
@@ -218,7 +220,7 @@ const like = async (req, res) => {
 }
 
 // delete url
-const delete_url = async(req, res) => {
+const delete_url = async(req: Request, res: Response) => {
   try {
     const {id} = req.body
     const del_url = await Url.deleteOne({"_id": id})
@@ -229,25 +231,25 @@ const delete_url = async(req, res) => {
 }
 
 // creating tags
-const create_tag = async(req, res) => {
+const create_tag = async(req: Request, res: Response) => {
   try {
     // name createdby
     const name = req.body.params[0];
     const createdBy = req.body.userId;
     const tag = await Tag.create({name: name, createdBy: createdBy})
     res.status(200).json({tag: tag})
-  } catch (error) {
+  } catch (error: any) {
     console.log(error)
     return res.status(500).json({error : error.message})
   }
 }
 
 // get all tags
-const get_all_tags = async(req, res) => {
+const get_all_tags = async(req: Request, res: Response) => {
   try {
     const tags = await Tag.find()
     res.status(200).json({tags: tags})
-  } catch (error) {
+  } catch (error: any) {
     console.log(error)
     return res.status(500).json({error: error.message})
   }
@@ -269,11 +271,11 @@ const fetchUrlsByTags  = async (tags, page = 1, limit = 100) => {
 }
 
 // return urls by tags. No shuffling
-const getUrlsByTags = async (req, res) => {
+const getUrlsByTags = async (req: Request, res: Response) => {
   try {
-    const tags = req.query.tags || ''; // Get the tags from query parameters
-    const page = parseInt(req.query.page) || 1; // Get the page number from query parameters, default to 1 if not provided
-    const limit = parseInt(req.query.limit) || 100; // Get the limit from query parameters, default to 100 if not provided
+    const tags: string = req.query.tags || ''; // Get the tags from query parameters
+    const page: number = parseInt(req.query.page as string) || 1; // Get the page number from query parameters, default to 1 if not provided
+    const limit: number = parseInt(req.query.limit as string) || 100; // Get the limit from query parameters, default to 100 if not provided
 
     const [urls, count] = await Promise.all([
       Url.find({ tags: { $in: tags } })
