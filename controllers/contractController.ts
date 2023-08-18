@@ -352,32 +352,32 @@ const mix = async (req: Request, res: Response): Promise<Response> => {
 
 
 
-const syncDataToSmartContract = async () => {
-  const my_contractObj = new MyContract();
-  const contract = my_contractObj.create_contract();
-  const wallet = new ethers.Wallet(process.env.PRIVATE_KEY?? "", contract.provider);
-  const contractWithSigner = contract.connect(wallet);
+// const syncDataToSmartContract = async () => {
+//   const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
+//   const contract = new MyContract(process.env.CONTRACT_ADDRESS ?? "", process.env.ABI ?? [], provider);
+//   const wallet = new ethers.Wallet(process.env.PRIVATE_KEY?? "", contract.provider);
+//   const contractWithSigner = contract.connect(wallet);
 
-  // Sync users
-  const users = await User.find();
-  for (const user of users) {
-      await contractWithSigner.addUser(user.walletAddress);
-  }
+//   // Sync users
+//   const users = await User.find();
+//   for (const user of users) {
+//       await contractWithSigner.addUser(user.walletAddress);
+//   }
 
-  // Sync URLs
-  const urls: SyncUrl[] = await Url.find().populate('submittedBy');
-  for (const url of urls) {
-      await contractWithSigner.addUrl(url.title, url.url, url.submittedBy.walletAddress, url.id);
-  }
+//   // Sync URLs
+//   const urls: SyncUrl[] = await Url.find().populate('submittedBy');
+//   for (const url of urls) {
+//       await contractWithSigner.addUrl(url.title, url.url, url.submittedBy.walletAddress, url.id);
+//   }
 
-  // Sync tags
-  const allTags: Synctag[] = await Tag.find().populate('createdBy');
-  for (const tag of allTags) {
-      await contractWithSigner.addTag(tag.name, tag.createdBy.walletAddress);
-  }
-}
+//   // Sync tags
+//   const allTags: Synctag[] = await Tag.find().populate('createdBy');
+//   for (const tag of allTags) {
+//       await contractWithSigner.addTag(tag.name, tag.createdBy.walletAddress);
+//   }
+// }
 
-module.exports = {
+const cc = {
   create_user,
   login,
   recover_account,
@@ -389,6 +389,7 @@ module.exports = {
   delete_url,
   getUrlsByTags,
   get_all_tags,
-  mix,
-  syncDataToSmartContract
+  mix
+  // syncDataToSmartContract
 }
+export default cc;

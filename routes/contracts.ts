@@ -1,5 +1,6 @@
 import express from "express";
 import cc from "../controllers/contractController";
+
 import {
     authenticate,
     verifySignedMessage,
@@ -325,6 +326,6 @@ router.get("/tag", cc.get_all_tags);
  *         description: Server error
  */
 // sync data to smart contract
-router.get("/sync", cc.syncDataToSmartContract);
+// router.get("/sync", cc.syncDataToSmartContract);
 
 export default router;
