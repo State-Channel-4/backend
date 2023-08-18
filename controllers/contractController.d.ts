@@ -1,4 +1,4 @@
-export function create_user(req: any, res: any): Promise<void>;
+export function create_user(req: Request, res: Response): Promise<Response>;
 export function login(req: any, res: any): Promise<any>;
 export function recover_account(req: any, res: any): Promise<void>;
 /**
