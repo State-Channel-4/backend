@@ -1,10 +1,19 @@
-import { ethers } from 'ethers';
 import { Request, Response, NextFunction } from "express";
 import dotenv from "dotenv";
 import mongoose from 'mongoose';
-import  MyContract  from './contract';
-
-
+import '@nomicfoundation/hardhat-toolbox';
+import { ethers } from 'hardhat';
+import {
+  BACKEND_PRIVATE_KEY,
+  BACKEND_REGISTRATION_FEE,
+  FIRST_TAG,
+  FIRST_TITLE,
+  FIRST_URL,
+  SECOND_TAG,
+  SECOND_TITLE,
+  SECOND_URL,
+  SLASHING_FEE,
+} from './constants';
 // Models
 import User from "../models/users"
 import { IUserSchema } from "../models/users";
@@ -18,10 +27,20 @@ import { ITag } from '../models/tags';
 import { generateToken } from '../middleware/auth';
 
 
-const create_contract = (): ethers.Contract => {
+const create_contract = async () => {
     const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
-    const contract = new ethers.Contract(process.env.CONTRACT_ADDRESS ?? "", process.env.ABI ?? [], provider);
-    return contract;
+    const wallet = new ethers.Wallet(process.env.PRIVATE_KEY?? "", provider);
+    const factory = await ethers.getContractFactory('Channel4Contract');
+    
+    const contract = await factory.connect(wallet).deploy(    FIRST_TITLE,
+      FIRST_URL,
+      FIRST_TAG,
+      SLASHING_FEE,
+      BACKEND_REGISTRATION_FEE,);
+      await contract.connect(wallet).registerBackend({
+        value: BACKEND_REGISTRATION_FEE,
+      });
+    return {contract, provider, wallet};
 };
 
 
@@ -352,30 +371,16 @@ const mix = async (req: Request, res: Response): Promise<Response> => {
 
 
 
-// const syncDataToSmartContract = async () => {
-//   const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
-//   const contract = new MyContract(process.env.CONTRACT_ADDRESS ?? "", process.env.ABI ?? [], provider);
-//   const wallet = new ethers.Wallet(process.env.PRIVATE_KEY?? "", contract.provider);
-//   const contractWithSigner = contract.connect(wallet);
+const syncDataToSmartContract = async () => {
+  const {contract, provider, wallet} = await create_contract();
+  // get users tags and urls from mongodb
+  const users = await User.find();
+  const tags = await Tag.find();
+  const urls = await Url.find();
 
-//   // Sync users
-//   const users = await User.find();
-//   for (const user of users) {
-//       await contractWithSigner.addUser(user.walletAddress);
-//   }
+  const result = await contract.syncState([], [], []);
 
-//   // Sync URLs
-//   const urls: SyncUrl[] = await Url.find().populate('submittedBy');
-//   for (const url of urls) {
-//       await contractWithSigner.addUrl(url.title, url.url, url.submittedBy.walletAddress, url.id);
-//   }
-
-//   // Sync tags
-//   const allTags: Synctag[] = await Tag.find().populate('createdBy');
-//   for (const tag of allTags) {
-//       await contractWithSigner.addTag(tag.name, tag.createdBy.walletAddress);
-//   }
-// }
+}
 
 const cc = {
   create_user,
@@ -389,7 +394,7 @@ const cc = {
   delete_url,
   getUrlsByTags,
   get_all_tags,
-  mix
-  // syncDataToSmartContract
+  mix,
+  syncDataToSmartContract
 }
 export default cc;
