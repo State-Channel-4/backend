@@ -64,6 +64,11 @@ const URLSchema = new mongoose.Schema({
   syncedToBlockchain: {
     type: Boolean,
     default: false
+  },
+  RabbitHole: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'RabbitHole',
+    unique: true
   }
 });
 

@@ -3,6 +3,7 @@ const cors = require("cors");
 const express = require("express");
 const mongoose = require("mongoose");
 const contractRoutes = require("./routes/contracts");
+const rabbitHoleRoutes = require("./routes/rabbitHoleRoutes");
 
 // swagger imports
 const swaggerJsdoc = require("swagger-jsdoc");
@@ -25,7 +26,9 @@ const specs = swaggerJsdoc(swaggerOptions);
 
 // routes
 app.use("/api", contractRoutes);
+app.use("/api/rabbithole", rabbitHoleRoutes);
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(specs, { explorer: true }));
+
 
 // connect to db
 mongoose
