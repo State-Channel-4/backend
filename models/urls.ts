@@ -64,4 +64,4 @@ export type SyncUrls = SyncUrl[];
       default: false
     }
   });
-export default mongoose.model<IUrl>('User', URLSchema);
+export default mongoose.model<IUrl>('Url', URLSchema);
