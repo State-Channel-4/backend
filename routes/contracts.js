@@ -1,9 +1,15 @@
 const express = require("express");
-const cc = require("../controllers/contractController");
 const {
-    authenticate,
-    verifySignedMessage,
-    verifySignedFunctionMessage,
+  authControl,
+  contractControl,
+  tagControl,
+  urlControl,
+  userControl,
+} = require("../controllers/index");
+const {
+  authenticate,
+  verifySignedMessage,
+  verifySignedFunctionMessage,
 } = require("../middleware/auth");
 
 const router = express.Router();
@@ -30,7 +36,7 @@ const router = express.Router();
  *         description: Error in creating user
  */
 // create user
-router.post("/user", cc.create_user);
+router.post("/user", userControl.createUser);
 
 /**
  * @swagger
@@ -55,18 +61,17 @@ router.post("/user", cc.create_user);
  *       500:
  *         description: Server error
  */
-router.post("/login", cc.login);
+router.post("/login", authControl.login);
 
 // get users
-router.get("/users", authenticate, cc.get_all_users);
-
+router.get("/users", authenticate, userControl.getAllUsers);
 
 // get specific user
-router.get("/user/:id", authenticate, cc.get_specific_user);
+router.get("/users/:id", authenticate, userControl.getUser);
 
 /**
  * @swagger
- * /api/recover_account:
+ * /api/recover-account:
  *   post:
  *     summary: Recover account using mnemonic phrase
  *     tags: [Users]
@@ -86,7 +91,7 @@ router.get("/user/:id", authenticate, cc.get_specific_user);
  *         description: Error in recovering account
  */
 // recover key
-router.post("/recover_account", cc.recover_account);
+router.post("/recover-account", authControl.recoverAccount);
 
 /**
  * @swagger
@@ -118,7 +123,12 @@ router.post("/recover_account", cc.recover_account);
  *         description: Server error
  */
 // like or unlike a url
-router.put("/like/:id", authenticate, verifySignedFunctionMessage, cc.like);
+router.put(
+  "/like/:id",
+  authenticate,
+  verifySignedFunctionMessage,
+  urlControl.handleLike
+);
 
 /**
  * @swagger
@@ -152,7 +162,12 @@ router.put("/like/:id", authenticate, verifySignedFunctionMessage, cc.like);
  *         description: Server error
  */
 // submit url
-router.post("/url", authenticate, verifySignedFunctionMessage, cc.submit_url);
+router.post(
+  "/url",
+  authenticate,
+  verifySignedFunctionMessage,
+  urlControl.createURL
+);
 
 /**
  * @swagger
@@ -176,7 +191,12 @@ router.post("/url", authenticate, verifySignedFunctionMessage, cc.submit_url);
  *         description: Server error
  */
 // delete url
-router.delete("/url", authenticate, verifySignedMessage, cc.delete_url);
+router.delete(
+  "/url",
+  authenticate,
+  verifySignedMessage,
+  urlControl.deleteURL
+);
 
 /**
  * @swagger
@@ -202,7 +222,12 @@ router.delete("/url", authenticate, verifySignedMessage, cc.delete_url);
  *         description: Server error
  */
 // creating tags
-router.post("/tag", authenticate, verifySignedFunctionMessage, cc.create_tag);
+router.post(
+  "/tag",
+  authenticate,
+  verifySignedFunctionMessage,
+  tagControl.createTag
+);
 
 /**
  * @swagger
@@ -228,7 +253,8 @@ router.post("/tag", authenticate, verifySignedFunctionMessage, cc.create_tag);
  *         description: Server error
  */
 // fetch url by tags
-router.get("/url/tag", cc.getUrlsByTags);
+// TODO:Not sure where we use this route @hackertron
+// router.get("/url/tag", mainControl.getUrlsByTags);
 
 /**
  * @swagger
@@ -239,7 +265,7 @@ router.get("/url/tag", cc.getUrlsByTags);
  *     parameters:
  *       - in: query
  *         name: tags
- *         required: false
+ *         required: true
  *         schema:
  *           type: array
  *           items:
@@ -293,9 +319,8 @@ router.get("/url/tag", cc.getUrlsByTags);
  *       500:
  *         description: Server error
  */
-// fetch mixed urls from tags. take tags, page, and limit as query params
-router.get("/mix", cc.mix);
-
+// fetch mixed urls from tags. take tags*, page (optional), and limit(optional) as query params
+router.get("/mix", urlControl.getMixedURLs);
 
 /**
  * @swagger
@@ -324,9 +349,8 @@ router.get("/mix", cc.mix);
  *         description: Server error
  */
 
-// get all tag
-router.get("/tag", cc.get_all_tags);
-
+// get all tags
+router.get("/tag", tagControl.getAllTags);
 
 /**
  * @swagger
@@ -341,6 +365,6 @@ router.get("/tag", cc.get_all_tags);
  *         description: Server error
  */
 // sync data to smart contract
-router.get("/sync", cc.syncDataToSmartContract);
+router.get("/sync", contractControl.syncDataToSmartContract);
 
 module.exports = router;
