@@ -239,7 +239,7 @@ router.get("/url/tag", cc.getUrlsByTags);
  *     parameters:
  *       - in: query
  *         name: tags
- *         required: true
+ *         required: false
  *         schema:
  *           type: array
  *           items:
@@ -247,6 +247,21 @@ router.get("/url/tag", cc.getUrlsByTags);
  *         style: form
  *         explode: true
  *         description: An array of tags to filter the URLs
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: The page number for paginated results
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *         description: The maximum number of results per page
  *     responses:
  *       200:
  *         description: The mixed URLs were fetched successfully
@@ -278,8 +293,9 @@ router.get("/url/tag", cc.getUrlsByTags);
  *       500:
  *         description: Server error
  */
-// fetch mixed urls from tags. take tags as query param
+// fetch mixed urls from tags. take tags, page, and limit as query params
 router.get("/mix", cc.mix);
+
 
 /**
  * @swagger

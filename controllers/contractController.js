@@ -254,32 +254,40 @@ const get_all_tags = async(req, res) => {
 }
 
 // Helper function to url URLs based on tags
-const fetchUrlsByTags  = async (tags, page = 1, limit = 100) => {
-  // Find URLs that have tags that match the extracted tag IDs
-  // Populate the 'tags' field of the URLs with the tag names
+const fetchUrlsByTags = async (tags, page = 1, limit = 100) => {
   try {
+    let query = {};
+    if (Array.isArray(tags) && tags.length > 0) {
+      query.tags = { $in: tags };
+    }
     const skipCount = (page - 1) * limit;
-    return await Url.find({ tags: { $in: tags } }, {})
-    .skip(skipCount)
-    .limit(limit)
-    .populate('tags', 'name');
+    const results = await Url.find(query, {})
+      .skip(skipCount)
+      .limit(limit)
+      .populate('tags', 'name');
+    return results;
   } catch (error) {
-    return { "error": error }
+    return { error };
   }
-}
+};
+
 
 // return urls by tags. No shuffling
 const getUrlsByTags = async (req, res) => {
   try {
-    const tags = req.query.tags || ''; // Get the tags from query parameters
-    const page = parseInt(req.query.page) || 1; // Get the page number from query parameters, default to 1 if not provided
-    const limit = parseInt(req.query.limit) || 100; // Get the limit from query parameters, default to 100 if not provided
+    let tags = req.query.tags;
+
+    // Check if tags are undefined or not an array, and set to empty array if needed
+    if (tags === undefined || !Array.isArray(tags)) {
+      tags = [];
+    }
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 100;
 
     const [urls, count] = await Promise.all([
-      Url.find({ tags: { $in: tags } })
-        .skip((page - 1) * limit) // Skip the appropriate number of documents based on the page and limit
-        .limit(limit), // Limit the number of documents returned per page
-      Url.countDocuments({ tags: { $in: tags } })
+      fetchUrlsByTags(tags, page, limit),
+      Url.countDocuments(tags.length > 0 ? { tags: { $in: tags } } : {})
     ]);
 
     const totalPages = Math.ceil(count / limit);
@@ -311,10 +319,16 @@ const mix = async (req, res) => {
   try {
     const { tags, page = 1, limit = 100 } = req.query;
     console.log("tags : page : limit ", tags, page, limit)
+
+    let countQuery = {};
+    // check if tags are undefined or empty. if yes, use it to count
+    if (Array.isArray(tags) && tags.length > 0) {
+      countQuery.tags = { $in: tags };
+    }
     // Fetch the URLs based on the provided tags
     const [urls, count] = await Promise.all([
       fetchUrlsByTags(tags, page, limit),
-      Url.countDocuments({ tags: { $in: tags } })
+      Url.countDocuments(countQuery)
     ]);
 
     // Randomize the order of the URLs
