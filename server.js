@@ -36,7 +36,7 @@ mongoose
         console.log("connected to database");
         // listen to port
         app.listen(process.env.PORT, () => {
-            console.log("listening for requests on port", process.env.PORT);
+            console.log(`listening for requests on port http://localhost:${process.env.PORT}`);
         });
     })
     .catch((err) => {
