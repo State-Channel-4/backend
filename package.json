@@ -6,7 +6,9 @@
   "scripts": {
     "test": "cross-env NODE_ENV=test jest --testTimeout=15000",
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "docker": "docker compose -f ./docker/docker-compose.yml",
+    "docker:clean": "sudo rm -rf ./docker/db ./docker/logs"
   },
   "keywords": [],
   "author": "",
