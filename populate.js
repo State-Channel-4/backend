@@ -2,20 +2,16 @@ require("dotenv").config();
 const { Wallet, JsonRpcProvider, Contract } = require("ethers");
 
 // url of backend
-const api = "http://localhost:8000/api";
+const API_URL = "http://localhost:8000/api";
 
 // rpc url used to connect to the smart contract
 const PROVIDER = new JsonRpcProvider(process.env.RPC_URL);
 
 // contract for metatransactions
-const CONTRACT = new Contract(
-    process.env.CONTRACT_ADDRESS,
-    process.env.ABI,
-    PROVIDER
-);
+const CONTRACT = new Contract(process.env.CONTRACT_ADDRESS, process.env.ABI, PROVIDER);
 
 // anvil private key #0-2
-const WALLETS = [
+const USERS = [
     "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
     "59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d",
     "5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a"
@@ -23,17 +19,14 @@ const WALLETS = [
 
 // urls to use
 const URLS = [
-    // never gonna give you up
     {
         title: "Rick Astley - Never Gonna Give You Up",
         url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
     },
-    // funny animals compilation
     {
         title: "Funny Animal Videos 2023",
         url: "https://www.youtube.com/watch?v=j1TKkm1jZK4",
     },
-    // dogs
     {
         title: "Reddit.com - r/dogs",
         url: "https://www.reddit.com/r/dogs/",
@@ -41,14 +34,7 @@ const URLS = [
 ];
 
 // tags to use
-const TAGS = [
-    // URLS: 0, 1
-    "videos",
-    // URLS: 0, 1
-    "funny",
-    // URLS: 1, 2
-    "animals",
-];
+const TAGS = ["videos", "funny", "animals"];
 
 /**
  * Sign up in the channel4 backend
@@ -57,18 +43,15 @@ const TAGS = [
  * @returns {string} token - session token for the user
  */
 async function signup(address) {
-    let res = await fetch(`${api}/user`, {
+    let res = await fetch(`${API_URL}/user`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address })
+        body: JSON.stringify({ address }),
     });
 
-    if (!res.ok) {
+    if (!res.ok)
         throw new Error(`Add user "${address}" failed: ${res.statusText} (${res.status}))`);
-    } else {
-        let data = await res.json();
-        return { uuid: data.user._id, token: data.token }
-    }
+    return await res.json().then(data => { return { uuid: data.user._id, token: data.token } });
 }
 
 /**
@@ -84,26 +67,24 @@ async function addTag(name, wallet, token, userId) {
     const functionName = "createTagIfNotExists";
     const signedMessage = await metatx(functionName, [name], wallet);
 
-    let res = await fetch(`${api}/tag`, {
+    let res = await fetch(`${API_URL}/tag`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
+            Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
             signedMessage,
             address: wallet.address,
             functionName,
             params: [name],
-            userId
-        })
+            userId,
+        }),
     });
 
-    if (!res.ok) {
+    if (!res.ok)
         throw new Error(`Add tag "${tag}" failed: ${res.statusText} (${res.status}))`);
-    } else {
-        return await res.json();
-    }
+    return await res.json().then(data => data.tag._id);
 }
 
 /**
@@ -122,26 +103,24 @@ async function addUrl(title, url, tags, wallet, token, userId) {
     const params = [title, url, tags];
     const signedMessage = await metatx(functionName, params, wallet);
 
-    let res = await fetch(`${api}/url`, {
+    let res = await fetch(`${API_URL}/url`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
+            Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
             signedMessage,
             address: wallet.address,
             functionName,
             params,
-            userId
-        })
+            userId,
+        }),
     });
 
-    if (!res.ok) {
+    if (!res.ok)
         throw new Error(`Add url "${title}" failed: ${res.statusText} (${res.status}))`);
-    } else {
-        return await res.json();
-    }
+    return await res.json().then(data => data._id);
 }
 
 /**
@@ -150,10 +129,8 @@ async function addUrl(title, url, tags, wallet, token, userId) {
  * @returns {void} - will return if success and throw otherwise
  */
 async function sync() {
-    let res = await fetch(`${backendUrl}/api/sync`);
-    if (!res.ok) {
-        throw new Error(`Sync (${res.status})`);
-    }
+    let res = await fetch(`${API_URL}/sync`);
+    if (!res.ok) throw new Error(`Sync (${res.status})`);
 }
 
 /**
@@ -177,65 +154,57 @@ async function metatx(fxn, params, wallet) {
  *  - sync contract with database
  */
 async function main() {
+    console.log("Populating channel4 dev environment...");
+
     /// ADD USERS ///
     // will fail if users already exist in db
-    let users = await Promise.all(WALLETS.map(wallet => signup(wallet.address)));
+    let users = await Promise.all(USERS.map(wallet => signup(wallet.address)));
+    console.log("Added users...");
 
     /// ADD TAGS ///
-    // add tag 1 from user 1
-    // add tag 2 from user 1
-    // add tag 2 from user 2
-    await Promise.all([
-        addTag(TAGS[0], WALLETS[0], users[0].token, users[0].uuid),
-        addTag(TAGS[1], WALLETS[0], users[0].token, users[0].uuid),
-        addTag(TAGS[2], WALLETS[1], users[1].token, users[1].uuid)
+    let tags = await Promise.all([
+        addTag(TAGS[0], USERS[0], users[0].token, users[0].uuid),
+        addTag(TAGS[1], USERS[0], users[0].token, users[0].uuid),
+        addTag(TAGS[2], USERS[1], users[1].token, users[1].uuid),
     ]);
+    console.log("Added tags...");
 
     /// ADD URLS ///
-    // add url 1 from user 1
-    // add url 2 from user 2
-    // add url 3 from user 3
-    let res = await addUrl(
-        URLS[0].title,
-        URLS[0].url, 
-        [TAGS[0], TAGS[1]],
-        WALLETS[0],
-        users[0].token,
-        users[0].uuid
-    );
+    let _urls = await Promise.all([
+        addUrl(
+            URLS[0].title,
+            URLS[0].url,
+            [tags[0], tags[0]],
+            USERS[0],
+            users[0].token,
+            users[0].uuid,
+        ),
+        addUrl(
+            URLS[1].title,
+            URLS[1].url,
+            [tags[0], tags[1]],
+            USERS[1],
+            users[1].token,
+            users[1].uuid
+        ),
+        addUrl(
+            URLS[2].title,
+            URLS[2].url,
+            [tags[1], tags[2]],
+            USERS[2],
+            users[2].token,
+            users[2].uuid
+        ),
+    ]);
+    console.log("Added urls...");
 
-    console.log("res: ", res);
-    // await Promise.all([
-    //     addUrl(
-    //         URLS[0].title,
-    //         URLS[0].url, 
-    //         Array.from([TAGS[0], TAGS[1]]),
-    //         WALLETS[0],
-    //         users[0].token,
-    //         users[0].uuid
-    //     ),
-    //     addUrl(
-    //         URLS[1].title,
-    //         URLS[1].url,
-    //         [TAGS[0], TAGS[1]],
-    //         WALLETS[1],
-    //         users[1].token,
-    //         users[1].uuid
-    //     ),
-    //     addUrl(
-    //         URLS[2].title,
-    //         URLS[2].url,
-    //         [TAGS[1], TAGS[2]],
-    //         WALLETS[2],
-    //         users[2].token,
-    //         users[2].uuid
-    //     ),
-    // ]);
+    /// SYNC CONTRACT TO URL CONTRACT ///
+    await sync();
 }
 
 main()
     .then(() => {
-        console.log("successfully populated dev environment");
+        console.log("Successfully populated and synced channel4 dev environment!");
         process.exit(0);
     })
     .catch(error => {
