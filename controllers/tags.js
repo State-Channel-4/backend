@@ -45,10 +45,18 @@ const detachURL = async (tags, urlId) => {
   }
 };
 
+const markSynced = async (name) => {
+  const tag = await Tag.findOne({ name });
+  if (tag) {
+    tag.syncedToBlockchain = true;
+    await tag.save();
+  }
+};
 
 module.exports = {
   createTag,
   getAllTags,
   attachURL,
   detachURL,
+  markSynced,
 };

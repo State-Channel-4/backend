@@ -169,12 +169,12 @@ async function main() {
     ]);
     console.log("Added tags...");
 
-    /// ADD URLS ///
-    let _urls = await Promise.all([
+    /// ADD 1st URL BATCH ///
+    await Promise.all([
         addUrl(
             URLS[0].title,
             URLS[0].url,
-            [tags[0], tags[0]],
+            [tags[0], tags[1]],
             USERS[0],
             users[0].token,
             users[0].uuid,
@@ -187,6 +187,16 @@ async function main() {
             users[1].token,
             users[1].uuid
         ),
+    ]);
+    console.log("Added url batch 1...");
+
+    /// SYNC CONTRACT TO URL CONTRACT ///
+    console.log("Syncing with contract...");
+    await sync();
+    console.log("Synced with contract!");
+
+    /// ADD 2nd URL BATCH ///
+    await Promise.all([
         addUrl(
             URLS[2].title,
             URLS[2].url,
@@ -196,15 +206,16 @@ async function main() {
             users[2].uuid
         ),
     ]);
-    console.log("Added urls...");
 
     /// SYNC CONTRACT TO URL CONTRACT ///
+    console.log("Syncing with contract...");
     await sync();
+    console.log("Synced with contract!");
 }
 
 main()
     .then(() => {
-        console.log("Successfully populated and synced channel4 dev environment!");
+        console.log("Successfully populated channel4 dev environment!");
         process.exit(0);
     })
     .catch(error => {

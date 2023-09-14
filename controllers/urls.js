@@ -123,9 +123,18 @@ const handleLike = async (req, res) => {
   }
 };
 
+const markSynced = async (title) => {
+  const url = await Url.findOne({ title });
+  if (url) {
+    url.syncedToBlockchain = true;
+    await url.save();
+  }
+};
+
 module.exports = {
   createURL,
   deleteURL,
   getMixedURLs,
   handleLike,
+  markSynced,
 };
