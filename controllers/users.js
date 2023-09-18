@@ -67,23 +67,16 @@ const detachURL = async (userId, urlId) => {
   }
 };
 
-const markSynced = async (walletAddress) => {
-  const user = await Url.findOne({ walletAddress });
-  if (user) {
-    user.syncedToBlockchain = true;
-    await user.save();
-  }
-};
+const getUsersToSync = async () => {
+  return await await User.find({ syncedToBlockchain: false })
+    .then(users => users.map(user => user.walletAddress));
+}
 
-const clearPendingActions = async (userId, urlIds) => {
-  const user = await User.findById(userId);
-  if (user) {
-    // remove all ids from pendingActions specified in urlIds
-    user.pendingActions = user.pendingActions.filter(
-      (action) => !urlIds.includes(action.url)
-    );
-    await user.save();
-  }
+const markSynced = async (users) => {
+  await User.updateMany(
+    { walletAddress: { $in: users } },
+    { syncedToBlockchain: true }
+  );
 }
 
 module.exports = {
@@ -92,6 +85,6 @@ module.exports = {
   getUser,
   attachURL,
   detachURL,
-  clearPendingActions,
+  getUsersToSync,
   markSynced,
 };

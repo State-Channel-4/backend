@@ -45,18 +45,30 @@ const detachURL = async (tags, urlId) => {
   }
 };
 
-const markSynced = async (name) => {
-  const tag = await Tag.findOne({ name });
-  if (tag) {
-    tag.syncedToBlockchain = true;
-    await tag.save();
-  }
-};
+const getTagsToSync = async () => {
+  return await Tag.find({ syncedToBlockchain: false })
+    .populate({
+      path: 'createdBy',
+      model: 'User',
+      select: 'walletAddress'
+    })
+    .then(tags => tags.map(tag => {
+      return { name: tag.name, createdBy: tag.createdBy.walletAddress }
+    }));
+}
+
+const markSynced = async (tags) => {
+  await Tag.updateMany(
+    { name: { $in: tags } },
+    { syncedToBlockchain: true }
+  );
+}
 
 module.exports = {
   createTag,
   getAllTags,
   attachURL,
   detachURL,
+  getTagsToSync,
   markSynced,
 };

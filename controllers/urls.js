@@ -2,6 +2,7 @@ const { Url, User } = require("../models/schema");
 const shuffle = require("../lib/utils").shuffle;
 const TagControl = require("./tags");
 const UserControl = require("./users");
+const PendingControl = require("./pending");
 
 const createURL = async (req, res) => {
   try {
@@ -115,8 +116,8 @@ const handleLike = async (req, res) => {
       ? existingUser.likedUrls.filter((url) => url !== urlId)
       : [...existingUser.likedUrls, updatedUrl];
 
-    // Add url to user's pending urls
-    existingUser.pendingActions.push({ url: urlId, like: !urlAlreadyLiked });
+    // Update pending likes/dislikes to be synced
+    await PendingControl.togglePendingAction(existingUser._id, urlId);
 
     await existingUser.save();
     return res.json(existingUser);
@@ -126,18 +127,40 @@ const handleLike = async (req, res) => {
   }
 };
 
-const markSynced = async (title) => {
-  const url = await Url.findOne({ title });
-  if (url) {
-    url.syncedToBlockchain = true;
-    await url.save();
-  }
-};
+const getContentToSync = async () => {
+  return await await Url.find({ syncedToBlockchain: false })
+    .populate({
+      path: 'submittedBy',
+      model: 'User',
+      select: 'walletAddress'
+    })
+    .populate({
+      path: 'tags',
+      model: 'Tag',
+      select: 'name'
+    })
+    .then(urls => urls.map(url => {
+      return {
+        title: url.title,
+        url: url.url,
+        submittedBy: url.submittedBy.walletAddress,
+        tagIds: url.tags.map(tag => tag.name)
+      }
+    }));
+}
+
+const markSynced = async (urls) => {
+  await Url.updateMany(
+    { title: { $in: urls } },
+    { syncedToBlockchain: true }
+  );
+}
 
 module.exports = {
   createURL,
   deleteURL,
   getMixedURLs,
   handleLike,
+  getContentToSync,
   markSynced,
 };

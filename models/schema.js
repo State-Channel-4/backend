@@ -26,16 +26,6 @@ const UserSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  pendingActions: [{
-    url: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Url',
-    },
-    like: {
-      type: Boolean,
-      default: false
-    }
-  }]
 });
 
 const User = mongoose.model('User', UserSchema)
@@ -101,6 +91,19 @@ const TagSchema = new mongoose.Schema({
 });
 
 const Tag = mongoose.model('Tag', TagSchema)
+
+const PendingActionSchema = new mongoose.Schema({
+  from: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+  },
+  topic: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Url',
+  }
+});
+
+const PendingAction = mongoose.model('PendingAction', PendingActionSchema);
 
 module.exports = {
   User: User,
