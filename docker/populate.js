@@ -1,4 +1,5 @@
 require("dotenv").config();
+const ABI = require("../abi.json");
 const { Wallet, JsonRpcProvider, Contract } = require("ethers");
 
 // url of backend
@@ -8,7 +9,7 @@ const API_URL = "http://localhost:8000/api";
 const PROVIDER = new JsonRpcProvider(process.env.RPC_URL);
 
 // contract for metatransactions
-const CONTRACT = new Contract(process.env.CONTRACT_ADDRESS, process.env.ABI, PROVIDER);
+const CONTRACT = new Contract(process.env.CONTRACT_ADDRESS, ABI, PROVIDER);
 
 // anvil private key #0-2
 const USERS = [

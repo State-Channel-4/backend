@@ -1,4 +1,5 @@
 require("dotenv").config();
+const ABI = require("../abi.json");
 const ethers = require("ethers");
 const TagControl = require("./tags");
 const URLControl = require("./urls");
@@ -11,7 +12,7 @@ const __createContract = () => {
   const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
   const contract = new ethers.Contract(
     process.env.CONTRACT_ADDRESS,
-    process.env.ABI,
+    ABI,
     wallet
   );
   return contract;

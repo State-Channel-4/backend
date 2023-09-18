@@ -1,5 +1,5 @@
 const ethers = require("ethers");
-
+const ABI = require("../abi.json");
 const jwt = require("jsonwebtoken");
 let { expressjwt: express_jwt } = require("express-jwt");
 require("dotenv").config();
@@ -41,11 +41,8 @@ const verifySignedFunctionMessage = async (req, res, next) => {
         // signed transaction string to object
         const tx = ethers.Transaction.from(signedMessage);
         // Recreate the meta transaction
-        const urlContract = new ethers.Contract(
-            process.env.CONTRACT_ADDRESS,
-            process.env.ABI
-        );
-        const metaTransaction = await urlContract[
+        const channel4Contract = new ethers.Contract(process.env.CONTRACT_ADDRESS, ABI);
+        const metaTransaction = await channel4Contract[
             functionName
         ].populateTransaction(...params);
         // Compare server-side tx with client-side tx
