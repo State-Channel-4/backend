@@ -67,10 +67,22 @@ const detachURL = async (userId, urlId) => {
   }
 };
 
+const clearPendingActions = async (userId, urlIds) => {
+  const user = await User.findById(userId);
+  if (user) {
+    // remove all ids from pendingActions specified in urlIds
+    user.pendingActions = user.pendingActions.filter(
+      (action) => !urlIds.includes(action.url)
+    );
+    await user.save();
+  }
+}
+
 module.exports = {
   createUser,
   getAllUsers,
   getUser,
   attachURL,
   detachURL,
+  clearPendingActions,
 };

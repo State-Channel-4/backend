@@ -115,6 +115,9 @@ const handleLike = async (req, res) => {
       ? existingUser.likedUrls.filter((url) => url !== urlId)
       : [...existingUser.likedUrls, updatedUrl];
 
+    // Add url to user's pending urls
+    existingUser.pendingActions.push({ url: urlId, like: !urlAlreadyLiked });
+
     await existingUser.save();
     return res.json(existingUser);
   } catch (err) {

@@ -22,6 +22,20 @@ const UserSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
+  syncedToBlockchain: {
+    type: Boolean,
+    default: false
+  },
+  pendingActions: [{
+    url: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Url',
+    },
+    like: {
+      type: Boolean,
+      default: false
+    }
+  }]
 });
 
 const User = mongoose.model('User', UserSchema)
