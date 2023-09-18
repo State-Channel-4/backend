@@ -67,6 +67,14 @@ const detachURL = async (userId, urlId) => {
   }
 };
 
+const markSynced = async (walletAddress) => {
+  const user = await Url.findOne({ walletAddress });
+  if (user) {
+    user.syncedToBlockchain = true;
+    await user.save();
+  }
+};
+
 const clearPendingActions = async (userId, urlIds) => {
   const user = await User.findById(userId);
   if (user) {
@@ -85,4 +93,5 @@ module.exports = {
   attachURL,
   detachURL,
   clearPendingActions,
+  markSynced,
 };

@@ -28,52 +28,58 @@ const syncDataToSmartContract = async (_req, res) => {
     return res.status(500).json({ error: `Failed contract connection: ${error.message}` });
   }
 
-  // Sync Tags
-  try {
-    // find tags that are not synced
-    const tags = await Tag.find({ syncedToBlockchain: false })
+  // Get users to sync
+  const users = await User.find({ syncedToBlockchain: false })
+    .then(users => users.map(user => user.walletAddress));
+
+  // Get tags to sync
+  // todo: find clean way to batch all relational queries into one http request
+  let tags = await Tag.find({ syncedToBlockchain: false });
+  tags = await Promise.all(tags.map(async tag => {
+    let user = await User.findById(tag.createdBy).then(user => user.walletAddress);
+    return { name: tag.name, createdBy: user }
+  }));
+
+  // Get content to sync
+  // todo: find clean way to batch all relational queries into one http request
+  let urls = await Url.find({ syncedToBlockchain: false });
+  urls = await Promise.all(urls.map(async url => {
+    const contentTags = await Tag.find({ _id: { $in: url.tags } })
       .then(tags => tags.map(tag => tag.name));
-    // sync remaining tags with contract
-    for (const tag of tags) {
-      let tx = await contract.createTagIfNotExists(tag);
-      await tx.wait();
-      TagControl.markSynced(tag);
+    const user = await User.findById(url.submittedBy).then(user => user.walletAddress);
+    return {
+      title: url.title,
+      url: url.url,
+      submittedBy: user,
+      tagIds: contentTags,
     }
-  } catch (error) {
-    console.log("ERROR: ", error);
-    return res.status(500).json({ error: `Failed to sync tags: ${error.message}` });
-  }
+  }));
 
-  // Sync URLs
+  // Get pending actions
+  // @TODO: ask preferred way for storing pending actions
+  const pendingActions = [];
+
   try {
-    // find urls that are not synced
-    const urls = await Url.find({ syncedToBlockchain: false })
-      .then(urls => urls.map(url => {
-        return {
-          title: url.title,
-          url: url.url,
-          submittedBy: url.submittedBy,
-          tags: url.tags,
-        }
-      }));
-    // sync remaining urls with contract
-    for (const url of urls) {
-      // get address of user
-      // @TODO: add submittedBy to `submitURL`, currently not used
-      let _user = await User.findById(url.submittedBy).then(user => user.walletAddress);
-
-      // get tags attached to url
-      let tags = await Tag.find({ _id: { $in: url.tags } })
-        .then(tags => tags.map(tag => tag.name));
-
-      // submit to contract
-      let tx = await contract.submitURL(url.title, url.url, tags);
-      await tx.wait();
-      URLControl.markSynced(url.title);
-    }
+    let tx = await contract.syncState(users, tags, urls, pendingActions);
+    await tx.wait();
   } catch (error) {
-    return res.status(500).json({ error: `Failed to sync urls: ${error.message}` });
+    console.error("error: ", error);
+    return res.status(500).json({ error: `Failed to sync state: ${error.message}` });
   }
+
+  // mark all as synced
+  await User.updateMany(
+    { walletAddress: { $in: users } },
+    { syncedToBlockchain: true }
+  );
+  await Tag.updateMany(
+    { name: { $in: tags.map(tag => tag.name) } },
+    { syncedToBlockchain: true }
+  );
+  await Url.updateMany(
+    { title: { $in: urls.map(url => url.title) } },
+    { syncedToBlockchain: true }
+  );
 
   // return success on syncing smart contract with backend state
   return res.status(200).json({});
