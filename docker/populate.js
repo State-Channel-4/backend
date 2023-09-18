@@ -66,7 +66,7 @@ async function signup(address) {
  */
 async function addTag(name, wallet, token, userId) {
     const functionName = "createTagIfNotExists";
-    const signedMessage = await metatx(functionName, [name], wallet);
+    const signedMessage = await metatx(functionName, [name, wallet.address], wallet);
 
     let res = await fetch(`${API_URL}/tag`, {
         method: "POST",
@@ -78,7 +78,7 @@ async function addTag(name, wallet, token, userId) {
             signedMessage,
             address: wallet.address,
             functionName,
-            params: [name],
+            params: [name, wallet.address],
             userId,
         }),
     });
@@ -100,8 +100,9 @@ async function addTag(name, wallet, token, userId) {
  * @returns {object} - the response object for adding a url
  */
 async function addUrl(title, url, tags, wallet, token, userId) {
-    const functionName = "submitURL";
-    const params = [title, url, tags];
+    const functionName = "createContentIfNotExists";
+    // set likes (params[3] to 0 for api verification)
+    const params = [title, url, wallet.address, 0, tags];
     const signedMessage = await metatx(functionName, params, wallet);
 
     let res = await fetch(`${API_URL}/url`, {
@@ -156,7 +157,6 @@ async function metatx(fxn, params, wallet) {
  */
 async function main() {
     console.log("Populating channel4 dev environment...");
-
     /// ADD USERS ///
     // will fail if users already exist in db
     let users = await Promise.all(USERS.map(wallet => signup(wallet.address)));
@@ -188,16 +188,6 @@ async function main() {
             users[1].token,
             users[1].uuid
         ),
-    ]);
-    console.log("Added url batch 1...");
-
-    /// SYNC CONTRACT TO URL CONTRACT ///
-    console.log("Syncing with contract...");
-    await sync();
-    console.log("Synced with contract!");
-
-    /// ADD 2nd URL BATCH ///
-    await Promise.all([
         addUrl(
             URLS[2].title,
             URLS[2].url,
@@ -207,11 +197,12 @@ async function main() {
             users[2].uuid
         ),
     ]);
+    console.log("Added url batch 1...");
 
     /// SYNC CONTRACT TO URL CONTRACT ///
-    console.log("Syncing with contract...");
-    await sync();
-    console.log("Synced with contract!");
+    // console.log("Syncing with contract...");
+    // await sync();
+    // console.log("Synced with contract!");
 }
 
 main()

@@ -5,7 +5,7 @@ const UserControl = require("./users");
 
 const createURL = async (req, res) => {
   try {
-    const [title, url, tags] = req.body.params;
+    const [title, url, _submittedBy, _likes, tags] = req.body.params;
     const submittedBy = req.body.userId;
     const existingUrl = await Url.findOne({ url });
     if (existingUrl) {
