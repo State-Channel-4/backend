@@ -159,45 +159,45 @@ async function main() {
     console.log("Populating channel4 dev environment...");
     /// ADD USERS ///
     // will fail if users already exist in db
-    // let users = await Promise.all(USERS.map(wallet => signup(wallet.address)));
-    // console.log("Added users...");
+    let users = await Promise.all(USERS.map(wallet => signup(wallet.address)));
+    console.log("Added users...");
 
-    // /// ADD TAGS ///
-    // let tags = await Promise.all([
-    //     addTag(TAGS[0], USERS[0], users[0].token, users[0].uuid),
-    //     addTag(TAGS[1], USERS[0], users[0].token, users[0].uuid),
-    //     addTag(TAGS[2], USERS[1], users[1].token, users[1].uuid),
-    // ]);
-    // console.log("Added tags...");
+    /// ADD TAGS ///
+    let tags = await Promise.all([
+        addTag(TAGS[0], USERS[0], users[0].token, users[0].uuid),
+        addTag(TAGS[1], USERS[0], users[0].token, users[0].uuid),
+        addTag(TAGS[2], USERS[1], users[1].token, users[1].uuid),
+    ]);
+    console.log("Added tags...");
 
-    // /// ADD 1st URL BATCH ///
-    // await Promise.all([
-    //     addUrl(
-    //         URLS[0].title,
-    //         URLS[0].url,
-    //         [tags[0], tags[1]],
-    //         USERS[0],
-    //         users[0].token,
-    //         users[0].uuid,
-    //     ),
-    //     addUrl(
-    //         URLS[1].title,
-    //         URLS[1].url,
-    //         [tags[0], tags[1]],
-    //         USERS[1],
-    //         users[1].token,
-    //         users[1].uuid
-    //     ),
-    //     addUrl(
-    //         URLS[2].title,
-    //         URLS[2].url,
-    //         [tags[1], tags[2]],
-    //         USERS[2],
-    //         users[2].token,
-    //         users[2].uuid
-    //     ),
-    // ]);
-    // console.log("Added url batch 1...");
+    /// ADD 1st URL BATCH ///
+    await Promise.all([
+        addUrl(
+            URLS[0].title,
+            URLS[0].url,
+            [tags[0], tags[1]],
+            USERS[0],
+            users[0].token,
+            users[0].uuid,
+        ),
+        addUrl(
+            URLS[1].title,
+            URLS[1].url,
+            [tags[0], tags[1]],
+            USERS[1],
+            users[1].token,
+            users[1].uuid
+        ),
+        addUrl(
+            URLS[2].title,
+            URLS[2].url,
+            [tags[1], tags[2]],
+            USERS[2],
+            users[2].token,
+            users[2].uuid
+        ),
+    ]);
+    console.log("Added url batch 1...");
 
     /// SYNC CONTRACT TO URL CONTRACT ///
     console.log("Syncing with contract...");

@@ -33,27 +33,36 @@ const syncDataToSmartContract = async (_req, res) => {
     .then(users => users.map(user => user.walletAddress));
 
   // Get tags to sync
-  // todo: find clean way to batch all relational queries into one http request
-  let tags = await Tag.find({ syncedToBlockchain: false });
-  tags = await Promise.all(tags.map(async tag => {
-    let user = await User.findById(tag.createdBy).then(user => user.walletAddress);
-    return { name: tag.name, createdBy: user }
-  }));
-
+  const tags = await Tag.find({ syncedToBlockchain: false })
+    .populate({
+      path: 'createdBy',
+      model: 'User',
+      select: 'walletAddress'
+    })
+    .then(tags => tags.map(tag => {
+      return { name: tag.name, createdBy: tag.createdBy.walletAddress }
+    }));
+  
   // Get content to sync
-  // todo: find clean way to batch all relational queries into one http request
-  let urls = await Url.find({ syncedToBlockchain: false });
-  urls = await Promise.all(urls.map(async url => {
-    const contentTags = await Tag.find({ _id: { $in: url.tags } })
-      .then(tags => tags.map(tag => tag.name));
-    const user = await User.findById(url.submittedBy).then(user => user.walletAddress);
-    return {
-      title: url.title,
-      url: url.url,
-      submittedBy: user,
-      tagIds: contentTags,
-    }
-  }));
+  const urls = await Url.find({ syncedToBlockchain: false })
+    .populate({
+      path: 'submittedBy',
+      model: 'User',
+      select: 'walletAddress'
+    })
+    .populate({
+      path: 'tags',
+      model: 'Tag',
+      select: 'name'
+    })
+    .then(urls => urls.map(url => {
+      return {
+        title: url.title,
+        url: url.url,
+        submittedBy: url.submittedBy.walletAddress,
+        tagIds: url.tags.map(tag => tag.name)
+      }
+    }));
 
   // Get pending actions
   // @TODO: ask preferred way for storing pending actions
