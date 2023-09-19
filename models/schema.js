@@ -51,7 +51,8 @@ const URLSchema = new mongoose.Schema({
   },
   tags: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Tag'
+    ref: 'Tag',
+    required: true
   }],
   createdAt: {
     type: Date,

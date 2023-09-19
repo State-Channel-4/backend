@@ -7,6 +7,11 @@ const createURL = async (req, res) => {
   try {
     const [title, url, tags] = req.body.params;
     const submittedBy = req.body.userId;
+
+    if (!tags || tags.length === 0) {
+      return res.status(400).json({ error: "Tags cannot be empty" });
+    }
+
     const existingUrl = await Url.findOne({ url });
     if (existingUrl) {
       return res.status(400).json({ error: "URL already exists" });
@@ -23,6 +28,7 @@ const createURL = async (req, res) => {
     return res.status(500).json({ error: "Server error" });
   }
 };
+
 
 const deleteURL = async (req, res) => {
   try {
