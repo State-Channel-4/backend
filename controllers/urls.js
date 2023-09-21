@@ -9,7 +9,7 @@ const createURL = async (req, res) => {
     const submittedBy = req.body.userId;
 
     if (!tags || tags.length === 0) {
-      return res.status(400).json({ error: "Tags cannot be empty" });
+      return res.status(400).json({ error: "Please add some tags to the url" });
     }
 
     const existingUrl = await Url.findOne({ url });
