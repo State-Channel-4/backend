@@ -5,7 +5,7 @@ const createTag = async (req, res) => {
     const name = req.body.params[0];
     const createdBy = req.body.userId;
     const tag = await Tag.create({ name: name, createdBy: createdBy });
-    res.status(200).json({ tag });
+    res.status(201).json({ tag });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: error.message });

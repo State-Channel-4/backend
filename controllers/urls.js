@@ -2,7 +2,7 @@ const { Url, User } = require("../models/schema");
 const shuffle = require("../lib/utils").shuffle;
 const TagControl = require("./tags");
 const UserControl = require("./users");
-const PendingControl = require("./pending");
+const LikeControl = require("./likes");
 
 const createURL = async (req, res) => {
   try {
@@ -89,44 +89,6 @@ const getMixedURLs = async (req, res) => {
   }
 };
 
-const handleLike = async (req, res) => {
-  try {
-    const {
-      params: { id: urlId },
-      body: { address },
-    } = req;
-    const existingUser = await User.findOne({ walletAddress: address });
-
-    if (!existingUser) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    const urlAlreadyLiked = existingUser.likedUrls.includes(urlId);
-
-    // Toggle like status and update likes count
-    const likesChange = urlAlreadyLiked ? -1 : 1;
-    const updatedUrl = await Url.findByIdAndUpdate(
-      urlId,
-      { $inc: { likes: likesChange } },
-      { new: true }
-    );
-
-    // Update user's liked URLs
-    existingUser.likedUrls = urlAlreadyLiked
-      ? existingUser.likedUrls.filter((url) => url !== urlId)
-      : [...existingUser.likedUrls, updatedUrl];
-
-    // Update pending likes/dislikes to be synced
-    await PendingControl.togglePendingAction(existingUser._id, urlId);
-
-    await existingUser.save();
-    return res.json(existingUser);
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: "We couldn't update the likes" });
-  }
-};
-
 const getContentToSync = async () => {
   return await await Url.find({ syncedToBlockchain: false })
     .populate({
@@ -160,7 +122,6 @@ module.exports = {
   createURL,
   deleteURL,
   getMixedURLs,
-  handleLike,
   getContentToSync,
   markSynced,
 };

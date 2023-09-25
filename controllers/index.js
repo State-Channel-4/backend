@@ -4,5 +4,5 @@ module.exports = {
     userControl: require('./users'),
     urlControl: require('./urls'),
     tagControl: require('./tags'),
-    pendingControl: require('./pending'),
+    likeControl: require('./likes'),
 };

@@ -5,6 +5,7 @@ const {
   tagControl,
   urlControl,
   userControl,
+  likeControl
 } = require("../controllers/index");
 const {
   authenticate,
@@ -30,7 +31,7 @@ const router = express.Router();
  *               address:
  *                 type: string
  *     responses:
- *       200:
+ *       201:
  *         description: The user was created successfully
  *       400:
  *         description: Error in creating user
@@ -95,7 +96,7 @@ router.post("/recover-account", authControl.recoverAccount);
 
 /**
  * @swagger
- * /api/vote/{id}:
+ * /api/like/{id}:
  *   put:
  *     summary: Toggle the like for a url by a user
  *     tags: [Users, URL]
@@ -116,9 +117,11 @@ router.post("/recover-account", authControl.recoverAccount);
  *                 type: string
  *     responses:
  *       200:
- *         description: The like was toggled successfully
+ *         description: User updated their like status for the content
+ *       400:
+ *         description: Tried to like when already liked/ dislike when already disliked or never liked
  *       404:
- *         description: User not found
+ *         description: User or content not found
  *       500:
  *         description: Server error
  */
@@ -127,7 +130,7 @@ router.put(
   "/like/:id",
   authenticate,
   verifySignedFunctionMessage,
-  urlControl.handleLike
+  likeControl.handleLike
 );
 
 /**
@@ -216,7 +219,7 @@ router.delete(
  *               createdBy:
  *                 type: string
  *     responses:
- *       200:
+ *       201:
  *         description: The tag was created successfully
  *       500:
  *         description: Server error
@@ -348,7 +351,6 @@ router.get("/mix", urlControl.getMixedURLs);
  *       500:
  *         description: Server error
  */
-
 // get all tags
 router.get("/tag", tagControl.getAllTags);
 

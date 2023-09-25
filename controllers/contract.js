@@ -4,6 +4,7 @@ const ethers = require("ethers");
 const TagControl = require("./tags");
 const URLControl = require("./urls");
 const UserControl = require("./users");
+const LikeControl = require("./likes");
 
 // Models
 const { User, Tag, Url } = require("../models/schema");
@@ -33,12 +34,11 @@ const syncDataToSmartContract = async (_req, res) => {
   const users = await UserControl.getUsersToSync();
   const tags = await TagControl.getTagsToSync();
   const urls = await URLControl.getContentToSync();
-  const pending = await PendingControl.getPendingToSync();
-  const pendingToSync = pending.map(p => { return  { submittedBy: p.submittedBy, url: p.url }});
+  const likes = await LikeControl.getLikesToSync();
 
   // submit batch of data to smart contract to sync
   try {
-    let tx = await contract.syncState(users, tags, urls, pendingToSync);
+    let tx = await contract.syncState(users, tags, urls, likes);
     await tx.wait();
   } catch (error) {
     console.error("error: ", error);
@@ -48,8 +48,8 @@ const syncDataToSmartContract = async (_req, res) => {
   // mark all as synced
   await UserControl.markSynced(users);
   await TagControl.markSynced(tags.map(tag => tag.name));
-  await urlControl.markSynced(urls.map(url => url.title));
-  await PendingControl.markSynced(pending.map(p => p._id));
+  await URLControl.markSynced(urls.map(url => url.title));
+  await LikeControl.markSynced();
 
   // return success on syncing smart contract with backend state
   return res.status(200).json({});

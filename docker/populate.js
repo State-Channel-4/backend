@@ -101,7 +101,7 @@ async function addTag(name, wallet, token, userId) {
  */
 async function addUrl(title, url, tags, wallet, token, userId) {
     const functionName = "createContentIfNotExists";
-    // set likes (params[3] to 0 for api verification)
+    // set likes (params[3]) to 0 for api verification
     const params = [title, url, wallet.address, 0, tags];
     const signedMessage = await metatx(functionName, params, wallet);
 
@@ -123,6 +123,42 @@ async function addUrl(title, url, tags, wallet, token, userId) {
     if (!res.ok)
         throw new Error(`Add url "${title}" failed: ${res.statusText} (${res.status}))`);
     return await res.json().then(data => data._id);
+}
+
+/**
+ * Like a content item through the channel4 backend
+ * 
+ * @param oid - the oid of the content to like
+ * @param content - the url of the content to like
+ * @param like - true if the content should be liked, and false otherwise
+ * @param wallet - the wallet to sign the transaction with
+ * @param token - the session token for the user liking the content
+ * @param userId - the uuid of the user liking the content
+ */
+async function likeContent(oid, content, like, wallet, token, userId) {
+    const functionName = "toggleLike";
+    // set nonce (params[2]) to 0 for api verification and allow backend to set nonce
+    const params = [content, like, 0, wallet.address];
+    const signedMessage = await metatx(functionName, params, wallet);
+
+    let res = await fetch(`${API_URL}/like/${oid}`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+            signedMessage,
+            address: wallet.address,
+            functionName,
+            params,
+            userId,
+        }),
+    });
+
+    if (!res.ok)
+        throw new Error(`Like content "${content}" failed: ${res.statusText} (${res.status})`);
+    return await res.json();
 }
 
 /**
@@ -158,7 +194,8 @@ async function metatx(fxn, params, wallet) {
 async function main() {
     console.log("Populating channel4 dev environment...");
     /// ADD USERS ///
-    // will fail if users already exist in db
+    // will fail if users already exist in db, use mongosh to delete:
+    // `db.tags.deleteMany({}) && db.urls.deleteMany({}) && db.likes.deleteMany({}) && db.users.deleteMany({})`
     let users = await Promise.all(USERS.map(wallet => signup(wallet.address)));
     console.log("Added users...");
 
@@ -170,8 +207,8 @@ async function main() {
     ]);
     console.log("Added tags...");
 
-    /// ADD 1st URL BATCH ///
-    await Promise.all([
+    /// ADD URL BATCH ///
+    let urls = await Promise.all([
         addUrl(
             URLS[0].title,
             URLS[0].url,
@@ -197,7 +234,21 @@ async function main() {
             users[2].uuid
         ),
     ]);
-    console.log("Added url batch 1...");
+    console.log("Added urls...");
+
+    /// ADD LIKES ///
+    await Promise.all([
+        likeContent(urls[0], URLS[0].url, true, USERS[0], users[0].token, users[0].uuid),
+        likeContent(urls[0], URLS[0].url, true, USERS[1], users[1].token, users[1].uuid),
+        likeContent(urls[0], URLS[0].url, true, USERS[2], users[2].token, users[2].uuid),
+        likeContent(urls[1], URLS[1].url, true, USERS[0], users[0].token, users[0].uuid),
+        likeContent(urls[1], URLS[1].url, true, USERS[2], users[2].token, users[2].uuid),
+        likeContent(urls[2], URLS[2].url, true, USERS[0], users[0].token, users[0].uuid),
+        likeContent(urls[2], URLS[2].url, true, USERS[2], users[2].token, users[2].uuid),
+    ]);
+    // double like to test syncing
+    await likeContent(urls[0], URLS[0].url, false, USERS[0], users[0].token, users[0].uuid);   
+    console.log("Added likes...");
 
     /// SYNC CONTRACT TO URL CONTRACT ///
     console.log("Syncing with contract...");
