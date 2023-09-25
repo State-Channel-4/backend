@@ -74,6 +74,44 @@ const handleLike = async (req, res) => {
 
 }
 
+const handleGetLikes = async (req, res) => {
+    // unmarshall variables from http request
+    const { params: { userId } } = req;
+
+    // check if user exists
+    const user = await User.findById(userId);
+    if (!user) {
+        return res.status(404).json({
+            error: `User '${userId}' doesn't exist as a Channel 4 user`,
+        });
+    };
+
+    // get likes for the user
+    const likes = await user
+        .populate({
+            path: 'likedUrls',
+            model: 'Like',
+            match: { liked: true },
+            populate: {
+                path: 'topic',
+                model: 'Url',
+                select: ['url', 'title', '_id']
+            },
+        })
+        .then(user => {
+            return user.likedUrls.map(like => {
+                return {
+                    id: like.topic._id,
+                    url: like.topic.url,
+                    title: like.topic.title,
+                    nonce: like.nonce,
+                }
+            })
+        });
+
+    return res.status(200).json({ likes });
+}
+
 /**
  * Get all current pending likes/ dislikes that would mutate the contract state
  * @returns - data for all non-synced pending likes/dislikes to commit
@@ -114,6 +152,7 @@ const markSynced = async () => {
 
 module.exports = {
     handleLike,
+    handleGetLikes,
     getLikesToSync,
     markSynced,
 };

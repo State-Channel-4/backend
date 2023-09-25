@@ -162,6 +162,16 @@ async function likeContent(oid, content, like, wallet, token, userId) {
 }
 
 /**
+ * Get all likes for a given user
+ * @param {string} userId - the uuid of the user to get likes for 
+ */
+async function getLikes(userId) {
+    let res = await fetch(`${API_URL}/users/${userId}/likes`);
+    if (!res.ok) throw new Error(`Get likes failed: ${res.statusText} (${res.status})`);
+    return await res.json();
+}
+
+/**
  * Syncs the database with the smart contract
  * 
  * @returns {void} - will return if success and throw otherwise
@@ -246,14 +256,22 @@ async function main() {
         likeContent(urls[2], URLS[2].url, true, USERS[0], users[0].token, users[0].uuid),
         likeContent(urls[2], URLS[2].url, true, USERS[2], users[2].token, users[2].uuid),
     ]);
-    // double like to test syncing
-    await likeContent(urls[0], URLS[0].url, false, USERS[0], users[0].token, users[0].uuid);   
+    // double and triple like to test syncing
+    await likeContent(urls[0], URLS[0].url, false, USERS[0], users[0].token, users[0].uuid);
+    await likeContent(urls[2], URLS[2].url, false, USERS[2], users[2].token, users[2].uuid)
+    await likeContent(urls[2], URLS[2].url, true, USERS[2], users[2].token, users[2].uuid)   
     console.log("Added likes...");
 
     /// SYNC CONTRACT TO URL CONTRACT ///
     console.log("Syncing with contract...");
     await sync();
     console.log("Synced with contract!");
+
+    /// GET LIKES ///
+    const likes = await Promise.all(users.map(user => getLikes(user.uuid)));
+    for (let i = 0; i < likes.length; i++)
+        console.log(`User ${i} likes: `, likes[i]);
+    
 }
 
 main()

@@ -72,6 +72,30 @@ router.get("/users/:id", authenticate, userControl.getUser);
 
 /**
  * @swagger
+ * /api/users/:userId/likes:
+ *  get:
+ *    summary: Get all content liked by a user
+ *    tags: [Users]
+ *    parameters:
+ *     - in: path
+ *       name: userId
+ *       required: true
+ *       schema:
+ *        type: string
+ *        format: uuid
+ *       description: the uuid of the user
+ *  responses:
+ *    200: 
+ *      description: Returned likes for a given user
+ *    404:
+ *      description: User not found
+ */
+// get the likes of a user
+// @todo: add pagination
+router.get("/users/:userId/likes", likeControl.handleGetLikes);
+
+/**
+ * @swagger
  * /api/recover-account:
  *   post:
  *     summary: Recover account using mnemonic phrase
