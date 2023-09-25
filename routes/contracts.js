@@ -287,7 +287,12 @@ router.post(
  *           type: integer
  *           minimum: 1
  *           maximum: 100
- *         description: The maximum number of results per page
+  *       - in: pageArrayRequested
+ *         name: isPageArray
+ *         required: false
+ *         schema:
+ *           type: boolean
+ *         description: If need to generate pageArray that will be used by frontend to fetch random page using index
  *     responses:
  *       200:
  *         description: The mixed URLs were fetched successfully

@@ -3,6 +3,8 @@ const shuffle = require("../lib/utils").shuffle;
 const TagControl = require("./tags");
 const UserControl = require("./users");
 
+
+
 const createURL = async (req, res) => {
   try {
     const [title, url, tags] = req.body.params;
@@ -45,9 +47,10 @@ const deleteURL = async (req, res) => {
 };
 
 const __getURLsFromDb = async (tags, page = 1, limit = 100) => {
+  console.log("get url from db params : tags, page, limit", tags, page, limit);
   if (!tags) tags = "all";
   try {
-    const skipCount = (page - 1) * limit;
+    const skipCount = Math.max((page - 1) * limit, 0); // Ensure skipCount is non-negative
 
     const query = tags.includes("all")
       ? Url.find()
@@ -66,21 +69,33 @@ const __getURLsFromDb = async (tags, page = 1, limit = 100) => {
 
 const getMixedURLs = async (req, res) => {
   try {
-    const { tags, page, limit } = req.query;
-
-    const [urls, count] = await Promise.all([
-      __getURLsFromDb(tags, page, limit),
-      tags.includes("all")
-        ? Url.countDocuments()
-        : Url.countDocuments({ tags: { $in: tags } }),
-    ]);
-
+    const { tags, page, limit, isPageArray } = req.query;
+    let genPageArray = (isPageArray === 'true');
+    console.log(typeof(genPageArray));
+    const count = tags.includes("all") ? await Url.countDocuments() : await Url.countDocuments({ tags: { $in: tags } });
+    console.log("doc count : ", count);
     const totalPages = Math.ceil(count / limit);
-    const hasNextPage = page < totalPages;
+    let pageArray = Array();
+    let currentPageIndex = page
+
+    if(genPageArray)
+    {
+      console.log("gen array");
+      // Generate an array of page indices(1 based)
+      pageArray = Array.from({ length: totalPages }, (_, index) => index + 1);
+      console.log("page arr : ", pageArray);
+      console.log("page arr length : ", pageArray.length);
+      // Select a random page index
+      currentPageIndex = Math.floor(Math.random() * pageArray.length);
+
+    }     
+
+    const urls = await __getURLsFromDb(tags, currentPageIndex, limit);
 
     res.status(200).json({
       urls: shuffle(urls),
-      hasNextPage,
+      currentIndex: currentPageIndex,
+      pageArray: pageArray,
     });
   } catch (err) {
     console.error(err);
