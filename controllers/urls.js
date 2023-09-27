@@ -54,7 +54,7 @@ const __getURLsFromDb = async (tags, limit = 100) => {
   const results = await query.exec()
 
   // Populate 'tags' and 'name' fields
-  const populatedResults = await Url.populate(results, [{path: 'tags'}, {path: 'name'}])
+  const populatedResults = await Url.populate(results, [{path: 'tags', select: 'name'}])
 
     return populatedResults;
 
