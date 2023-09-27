@@ -90,7 +90,7 @@ const getMixedURLs = async (req, res) => {
 };
 
 const getContentToSync = async () => {
-  return await await Url.find({ syncedToBlockchain: false })
+  return await Url.find({ syncedToBlockchain: false })
     .populate({
       path: 'submittedBy',
       model: 'User',
