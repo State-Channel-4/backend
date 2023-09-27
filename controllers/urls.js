@@ -2,10 +2,11 @@ const { Url, User } = require("../models/schema");
 const shuffle = require("../lib/utils").shuffle;
 const TagControl = require("./tags");
 const UserControl = require("./users");
+const LikeControl = require("./likes");
 
 const createURL = async (req, res) => {
   try {
-    const [title, url, tags] = req.body.params;
+    const [title, url, _submittedBy, _likes, tags] = req.body.params;
     const submittedBy = req.body.userId;
 
     if (!tags || tags.length === 0) {
@@ -94,44 +95,39 @@ const getMixedURLs = async (req, res) => {
   }
 };
 
-const handleLike = async (req, res) => {
-  try {
-    const {
-      params: { id: urlId },
-      body: { address },
-    } = req;
-    const existingUser = await User.findOne({ walletAddress: address });
+const getContentToSync = async () => {
+  return await Url.find({ syncedToBlockchain: false })
+    .populate({
+      path: 'submittedBy',
+      model: 'User',
+      select: 'walletAddress'
+    })
+    .populate({
+      path: 'tags',
+      model: 'Tag',
+      select: 'name'
+    })
+    .then(urls => urls.map(url => {
+      return {
+        title: url.title,
+        url: url.url,
+        submittedBy: url.submittedBy.walletAddress,
+        tagIds: url.tags.map(tag => tag.name)
+      }
+    }));
+}
 
-    if (!existingUser) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    const urlAlreadyLiked = existingUser.likedUrls.includes(urlId);
-
-    // Toggle like status and update likes count
-    const likesChange = urlAlreadyLiked ? -1 : 1;
-    const updatedUrl = await Url.findByIdAndUpdate(
-      urlId,
-      { $inc: { likes: likesChange } },
-      { new: true }
-    );
-
-    // Update user's liked URLs
-    existingUser.likedUrls = urlAlreadyLiked
-      ? existingUser.likedUrls.filter((url) => url !== urlId)
-      : [...existingUser.likedUrls, updatedUrl];
-
-    await existingUser.save();
-    return res.json(existingUser);
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: "We couldn't update the likes" });
-  }
-};
+const markSynced = async (urls) => {
+  await Url.updateMany(
+    { title: { $in: urls } },
+    { syncedToBlockchain: true }
+  );
+}
 
 module.exports = {
   createURL,
   deleteURL,
   getMixedURLs,
-  handleLike,
+  getContentToSync,
+  markSynced,
 };

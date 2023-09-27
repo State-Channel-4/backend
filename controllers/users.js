@@ -6,7 +6,7 @@ const createUser = async (req, res) => {
   try {
     const user = await User.create({ walletAddress: address });
     const token = generateToken(user);
-    res.status(200).json({
+    res.status(201).json({
       user: user,
       token,
     });
@@ -67,10 +67,33 @@ const detachURL = async (userId, urlId) => {
   }
 };
 
+const getUsersToSync = async () => {
+  return await await User.find({ syncedToBlockchain: false })
+    .then(users => users.map(user => user.walletAddress));
+}
+
+const markSynced = async (users) => {
+  await User.updateMany(
+    { walletAddress: { $in: users } },
+    { syncedToBlockchain: true }
+  );
+}
+
+const getNonce = async (user, url) => {
+  return await User.findOne({ walletAddress: user })
+    .populate({
+      path: 'likedUrls.url',
+      model: 'Url',
+  });
+}
+
 module.exports = {
   createUser,
   getAllUsers,
   getUser,
   attachURL,
   detachURL,
+  getUsersToSync,
+  markSynced,
+  getNonce,
 };

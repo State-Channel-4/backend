@@ -8,7 +8,7 @@ const UserSchema = new mongoose.Schema({
   },
   likedUrls: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Url',
+    ref: 'Like',
   }],
   submittedUrls: [{
     type: mongoose.Schema.Types.ObjectId,
@@ -25,10 +25,10 @@ const UserSchema = new mongoose.Schema({
   syncedToBlockchain: {
     type: Boolean,
     default: false
-  }
+  },
 });
 
-const User = mongoose.model('User', UserSchema)
+const User = mongoose.model('User', UserSchema);
 
 const URLSchema = new mongoose.Schema({
   title: {
@@ -68,7 +68,7 @@ const URLSchema = new mongoose.Schema({
   }
 });
 
-const Url = mongoose.model('Url', URLSchema)
+const Url = mongoose.model('Url', URLSchema);
 
 const TagSchema = new mongoose.Schema({
   name: {
@@ -91,10 +91,34 @@ const TagSchema = new mongoose.Schema({
   }
 });
 
-const Tag = mongoose.model('Tag', TagSchema)
+const Tag = mongoose.model('Tag', TagSchema);
 
-module.exports = {
-  User: User,
-  Tag: Tag,
-  Url: Url
-};
+const LikeSchema = new mongoose.Schema({
+  from: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+  },
+  topic: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Url',
+  },
+  liked: {
+    type: Boolean,
+    default: true
+  },
+  nonce: {
+    type: Number,
+    default: 1
+  },
+  syncedToBlockchain: {
+    type: Number,
+    default: 0
+    // 0 - not synced, 1 - synced, 2 - should not sync since nonce is different but like is same
+  }
+});
+
+const Like = mongoose.model('Like', LikeSchema);
+
+
+
+module.exports = { User, Tag, Url, Like };

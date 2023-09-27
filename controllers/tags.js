@@ -5,7 +5,7 @@ const createTag = async (req, res) => {
     const name = req.body.params[0];
     const createdBy = req.body.userId;
     const tag = await Tag.create({ name: name, createdBy: createdBy });
-    res.status(200).json({ tag: tag });
+    res.status(201).json({ tag });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: error.message });
@@ -15,7 +15,7 @@ const createTag = async (req, res) => {
 const getAllTags = async (req, res) => {
   try {
     const tags = await Tag.find();
-    res.status(200).json({ tags: tags });
+    res.status(200).json({ tags });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: error.message });
@@ -45,10 +45,30 @@ const detachURL = async (tags, urlId) => {
   }
 };
 
+const getTagsToSync = async () => {
+  return await Tag.find({ syncedToBlockchain: false })
+    .populate({
+      path: 'createdBy',
+      model: 'User',
+      select: 'walletAddress'
+    })
+    .then(tags => tags.map(tag => {
+      return { name: tag.name, createdBy: tag.createdBy.walletAddress }
+    }));
+}
+
+const markSynced = async (tags) => {
+  await Tag.updateMany(
+    { name: { $in: tags } },
+    { syncedToBlockchain: true }
+  );
+}
 
 module.exports = {
   createTag,
   getAllTags,
   attachURL,
   detachURL,
+  getTagsToSync,
+  markSynced,
 };
