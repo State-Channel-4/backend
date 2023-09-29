@@ -1,3 +1,4 @@
+const { default: mongoose } = require("mongoose");
 const { Url, User } = require("../models/schema");
 const shuffle = require("../lib/utils").shuffle;
 const TagControl = require("./tags");
@@ -44,22 +45,33 @@ const deleteURL = async (req, res) => {
   }
 };
 
-const __getURLsFromDb = async (tags, limit = 100) => {
-  if (!tags) tags = "all";
+const __getURLsFromDb = async (tags = ["all"], limit = 100) => {
+  tags = Array.isArray(tags) ? tags : [tags];
+
   try {
-  const query = tags.includes("all")
-  ? Url.aggregate([{ $sample: {size: limit}}])
-  : Url.aggregate([{ $match: {tags: {$in: tags}}}, {$sample: {size: limit}}]);
+    let query;
+    if (tags.includes("all")) {
+      query = Url.aggregate([{ $sample: { size: parseInt(limit) } }]);
+    } else {
+      const userTagObjectIds = tags.map(
+        (tag) => new mongoose.Types.ObjectId(tag)
+      );
+      query = Url.aggregate([
+        { $match: { tags: { $in: userTagObjectIds } } },
+        { $sample: { size: parseInt(limit) } },
+      ]);
+    }
 
-  const results = await query.exec()
+    const results = await query.exec();
 
-  // Populate 'tags' and 'name' fields
-  const populatedResults = await Url.populate(results, [{path: 'tags', select: 'name'}])
+    // Populate 'tags' and 'name' fields
+    const populatedResults = await Url.populate(results, [
+      { path: "tags", select: "name" },
+    ]);
 
     return populatedResults;
-
   } catch (error) {
-    return { error };
+    throw error;
   }
 };
 
