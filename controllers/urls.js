@@ -1,3 +1,4 @@
+const { default: mongoose } = require("mongoose");
 const { Url, User } = require("../models/schema");
 const shuffle = require("../lib/utils").shuffle;
 const TagControl = require("./tags");
@@ -51,43 +52,43 @@ const deleteURL = async (req, res) => {
   }
 };
 
-const __getURLsFromDb = async (tags, page = 1, limit = 100) => {
-  if (!tags) tags = "all";
+const __getURLsFromDb = async (tags = ["all"], limit = 100) => {
+  tags = Array.isArray(tags) ? tags : [tags];
+
   try {
-    const skipCount = (page - 1) * limit;
+    let query;
+    if (tags.includes("all")) {
+      query = Url.aggregate([{ $sample: { size: parseInt(limit) } }]);
+    } else {
+      const userTagObjectIds = tags.map(
+        (tag) => new mongoose.Types.ObjectId(tag)
+      );
+      query = Url.aggregate([
+        { $match: { tags: { $in: userTagObjectIds } } },
+        { $sample: { size: parseInt(limit) } },
+      ]);
+    }
 
-    const query = tags.includes("all")
-      ? Url.find()
-      : Url.find({ tags: { $in: tags } });
+    const results = await query.exec();
 
-    const results = await query
-      .skip(skipCount)
-      .limit(limit)
-      .populate("tags", "name");
+    // Populate 'tags' and 'name' fields
+    const populatedResults = await Url.populate(results, [
+      { path: "tags", select: "name" },
+    ]);
 
-    return results;
+    return populatedResults;
   } catch (error) {
-    return { error };
+    throw error;
   }
 };
 
 const getMixedURLs = async (req, res) => {
   try {
-    const { tags, page, limit } = req.query;
-
-    const [urls, count] = await Promise.all([
-      __getURLsFromDb(tags, page, limit),
-      tags.includes("all")
-        ? Url.countDocuments()
-        : Url.countDocuments({ tags: { $in: tags } }),
-    ]);
-
-    const totalPages = Math.ceil(count / limit);
-    const hasNextPage = page < totalPages;
+    const { tags, limit } = req.query;
+    const urls = await __getURLsFromDb(tags, limit);
 
     res.status(200).json({
       urls: shuffle(urls),
-      hasNextPage,
     });
   } catch (err) {
     console.error(err);

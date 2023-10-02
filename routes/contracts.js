@@ -301,20 +301,12 @@ router.post(
  *         explode: true
  *         description: An array of tags to filter the URLs
  *       - in: query
- *         name: page
- *         required: false
- *         schema:
- *           type: integer
- *           minimum: 1
- *         description: The page number for paginated results
- *       - in: query
  *         name: limit
  *         required: false
  *         schema:
  *           type: integer
  *           minimum: 1
  *           maximum: 100
- *         description: The maximum number of results per page
  *     responses:
  *       200:
  *         description: The mixed URLs were fetched successfully
