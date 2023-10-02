@@ -1,5 +1,11 @@
 {
     "yaml.schemas": {
         "https://json.schemastore.org/github-workflow.json": "file:///home/nightmare/Projects/channel4/actions/.github/workflows/deploy.yaml"
-    }
+    },
+    "search.exclude": {
+        // "**/node_modules": true,
+        // "**/package-lock.json": true,
+        // "**/package.json": true,
+        "out/**": true // Don't search the TypeScript "out" folder
+      }
 }

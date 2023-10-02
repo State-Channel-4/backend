@@ -1,4 +1,4 @@
-module.exports = {
+export = {
     contractControl: require('./contract'),
     authControl: require('./auth'),
     userControl: require('./users'),
