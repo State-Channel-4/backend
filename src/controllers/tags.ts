@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { Types } from 'mongoose';
 import { Tag, TagDocument } from '../models/schema';
 
-const createTag = async (req: Request, res: Response) => {
+export const createTag = async (req: Request, res: Response) => {
   try {
     const name: string = req.body.params[0];
     const createdBy: string = req.body.userId;
@@ -19,7 +19,7 @@ const createTag = async (req: Request, res: Response) => {
   }
 };
 
-const getAllTags = async (req: Request, res: Response) => {
+export const getAllTags = async (req: Request, res: Response) => {
   try {
     const tags: TagDocument[] = await Tag.find();
     res.status(200).json({ tags });
@@ -34,7 +34,7 @@ const getAllTags = async (req: Request, res: Response) => {
   }
 };
 
-const attachURL = async (tags: Types.ObjectId[], urlId: Types.ObjectId) => {
+export const attachURL = async (tags: Types.ObjectId[], urlId: Types.ObjectId) => {
   for (const tagId of tags) {
     const tag: TagDocument | null = await Tag.findById(tagId);
     if (tag) {
@@ -44,7 +44,7 @@ const attachURL = async (tags: Types.ObjectId[], urlId: Types.ObjectId) => {
   }
 };
 
-const detachURL = async (tags: Types.ObjectId[], urlId: Types.ObjectId) => {
+export const detachURL = async (tags: Types.ObjectId[], urlId: Types.ObjectId) => {
   for (const tagId of tags) {
     const tag: TagDocument | null = await Tag.findById(tagId);
     if (tag) {
@@ -57,7 +57,7 @@ const detachURL = async (tags: Types.ObjectId[], urlId: Types.ObjectId) => {
   }
 };
 
-const getTagsToSync = async () => {
+export const getTagsToSync = async () : Promise<string[]> => {
   return Tag.find({ syncedToBlockchain: false })
     .populate({
       path: 'createdBy',
@@ -70,18 +70,9 @@ const getTagsToSync = async () => {
     })));
 }
 
-const markSynced = async (tags: string[]) => {
+export const markSynced = async (tags: string[]) => {
   await Tag.updateMany(
     { name: { $in: tags } },
     { syncedToBlockchain: true }
   );
 }
-
-export {
-  createTag,
-  getAllTags,
-  attachURL,
-  detachURL,
-  getTagsToSync,
-  markSynced,
-};

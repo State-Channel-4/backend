@@ -1,7 +1,11 @@
 const { generateToken } = require("../middleware/auth");
 const { User } = require("../models/schema");
+import { Request, Response } from 'express';
+import { Types } from 'mongoose';
+import { UserDocument, URLDocument } from '../models/schema';
 
-const createUser = async (req, res) => {
+
+export const createUser = async (req: Request, res: Response) => {
   const { address } = req.body;
   try {
     const user = await User.create({ walletAddress: address });
@@ -11,14 +15,19 @@ const createUser = async (req, res) => {
       token,
     });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    if (error instanceof Error) {
+      console.log(error.message);
+      res.status(400).json({ error: error.message });
+    } else {
+      return res.status(400).json({error: 'Unknown error occurred while creating user'});
+    }
   }
 };
 
-const getAllUsers = async (req, res) => {
+export const getAllUsers = async (req: Request, res: Response) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 100;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 100;
 
     const [users, count] = await Promise.all([
       User.find()
@@ -39,16 +48,21 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-const getUser = async (req, res) => {
+export const getUser = async (req: Request, res: Response) => {
   try {
     const user = await User.findById(req.params.id);
     res.status(200).json({ user: user });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    if (error instanceof Error) {
+      console.log(error.message);
+      res.status(400).json({ error: error.message });
+    } else {
+      return res.status(400).json({error: 'Unknown error occurred while getting user'});
+    }
   }
 };
 
-const attachURL = async (userId, urlId) => {
+export const attachURL = async (userId : Types.ObjectId, urlId: Types.ObjectId) => {
   const user = await User.findById(userId);
   if (user) {
     user.submittedUrls.push(urlId);
@@ -56,7 +70,7 @@ const attachURL = async (userId, urlId) => {
   }
 };
 
-const detachURL = async (userId, urlId) => {
+export const detachURL = async (userId: Types.ObjectId, urlId: Types.ObjectId) => {
   const user = await User.findById(userId);
   if (user) {
     const index = user.submittedUrls.indexOf(urlId);
@@ -67,33 +81,22 @@ const detachURL = async (userId, urlId) => {
   }
 };
 
-const getUsersToSync = async () => {
-  return await await User.find({ syncedToBlockchain: false })
-    .then(users => users.map(user => user.walletAddress));
+export const getUsersToSync = async () : Promise<string[]> => {
+  const users: UserDocument[] = await User.find({ syncedToBlockchain: false });
+  return users.map(user => user.walletAddress);
 }
 
-const markSynced = async (users) => {
+export const markSynced = async (users: UserDocument[]) => {
   await User.updateMany(
     { walletAddress: { $in: users } },
     { syncedToBlockchain: true }
   );
 }
-
-const getNonce = async (user, url) => {
+// dow we need url param in getNonce? 
+export const getNonce = async (user: UserDocument, url: URLDocument) => {
   return await User.findOne({ walletAddress: user })
     .populate({
       path: 'likedUrls.url',
       model: 'Url',
   });
 }
-
-module.exports = {
-  createUser,
-  getAllUsers,
-  getUser,
-  attachURL,
-  detachURL,
-  getUsersToSync,
-  markSynced,
-  getNonce,
-};

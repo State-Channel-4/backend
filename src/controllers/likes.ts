@@ -1,8 +1,10 @@
-const { Like, User, Url } = require('../models/schema');
-const { getUsersToSync } = require('./users');
+import { Like, User, Url } from '../models/schema';
+import { Request, Response } from 'express';
+
+import { getUsersToSync } from './users';
 
 
-const handleLike = async (req, res) => {
+const handleLike = async (req: Request, res: Response) => {
     try {
         // unmarshall variables from http request
         const {
@@ -74,7 +76,7 @@ const handleLike = async (req, res) => {
 
 }
 
-const handleGetLikes = async (req, res) => {
+const handleGetLikes = async (req: Request, res: Response) => {
     // unmarshall variables from http request
     const { params: { userId } } = req;
 

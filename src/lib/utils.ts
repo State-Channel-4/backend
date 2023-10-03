@@ -1,7 +1,9 @@
-const shuffle = (array) => {
-  let currentIndex = array.length, temporaryValue, randomIndex;
+export const shuffle = (array: string[]): string[] => {
+  let currentIndex = array.length;
+  let temporaryValue: string;
+  let randomIndex: number;
 
-  while (0 !== currentIndex) {
+  while (currentIndex !== 0) {
     randomIndex = Math.floor(Math.random() * currentIndex);
     currentIndex -= 1;
 
@@ -11,8 +13,4 @@ const shuffle = (array) => {
   }
 
   return array;
-};
-
-module.exports = {
-  shuffle,
 };
