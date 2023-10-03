@@ -51,7 +51,7 @@ describe("POST /api/user", () => {
       "address": "0xb985d345c4bb8121cE2d18583b2a28e98D56d04b"
     });
     console.log("created user : ", res.body);
-    expect(res.statusCode).toBe(200);
+    expect(res.statusCode).toBe(201);
     expect(res.body).toHaveProperty("token");
     expect(res.body).toHaveProperty("user");
   });
