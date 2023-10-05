@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { Types } from 'mongoose';
-import { Tag, TagDocument } from '../models/schema';
+import { Tag, TagDocument, UserDocument } from '../models/schema';
 import { TagToSync } from '../types/contract';
 
 export const createTag = async (req: Request, res: Response) => {
@@ -65,10 +65,13 @@ export const getTagsToSync = async () : Promise<TagToSync[]> => {
       model: 'User',
       select: 'walletAddress'
     })
-    .then(tags => tags.map(tag => ({
-      name: tag.name,
-      createdBy: tag.createdBy.walletAddress
-    })));
+    .then(tags => tags.map(tag => {
+      const createdBy = (tag.createdBy as unknown) as UserDocument
+      return {
+        name: tag.name,
+        createdBy: createdBy.walletAddress,
+      }
+    }));
 }
 
 export const markSynced = async (tags: string[]) => {
