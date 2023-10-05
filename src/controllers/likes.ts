@@ -5,13 +5,14 @@ import { getUsersToSync } from './users';
 
 
 const handleLike = async (req: Request, res: Response) => {
+    let url, liked, likeText, address;
     try {
         // unmarshall variables from http request
         const {
             params: { id: urlId },
             body: { address, params, userId },
         } = req;
-        const [url, liked] = params;
+        [url, liked] = params;
         const likeText = liked ? 'like' : 'dislike';
 
         // check user exists

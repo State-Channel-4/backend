@@ -5,6 +5,7 @@ import * as URLControl from './urls'
 import * as UserControl from './users';
 import * as LikeControl from './likes';
 
+
 // Models
 import { User, Tag, Url } from '../models/schema';
 import ABI from '../abi.json';
@@ -31,8 +32,8 @@ const syncDataToSmartContract = async (_req: Request, res: Response) => {
 
   // Get all data needed to sync with smart contract
   const users: string[] = await UserControl.getUsersToSync();
-  const tags: string[] = await TagControl.getTagsToSync();
-  const urls:any  = await URLControl.getContentToSync();
+  const tags = await TagControl.getTagsToSync();
+  const urls  = await URLControl.getContentToSync();
   const likes: string[] = await LikeControl.getLikesToSync();
 
   // Submit a batch of data to the smart contract to sync

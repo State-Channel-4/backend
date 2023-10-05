@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { Types } from 'mongoose';
 import { Tag, TagDocument } from '../models/schema';
+import { TagToSync } from '../types/contract';
 
 export const createTag = async (req: Request, res: Response) => {
   try {
@@ -57,7 +58,7 @@ export const detachURL = async (tags: Types.ObjectId[], urlId: Types.ObjectId) =
   }
 };
 
-export const getTagsToSync = async () : Promise<string[]> => {
+export const getTagsToSync = async () : Promise<TagToSync[]> => {
   return Tag.find({ syncedToBlockchain: false })
     .populate({
       path: 'createdBy',
