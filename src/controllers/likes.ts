@@ -1,4 +1,4 @@
-import { Like, User, Url } from '../models/schema';
+import { Like, User, Url, URLDocument, LikeDocument, UserDocument } from '../models/schema';
 import { Request, Response } from 'express';
 
 import { getUsersToSync } from './users';
@@ -103,11 +103,13 @@ const handleGetLikes = async (req: Request, res: Response) => {
         })
         .then(user => {
             return user.likedUrls.map(like => {
+                const likeDoc = (like as unknown) as LikeDocument
+                const topic = (likeDoc.topic as unknown) as URLDocument
                 return {
-                    id: like.topic._id,
-                    url: like.topic.url,
-                    title: like.topic.title,
-                    nonce: like.nonce,
+                    id: topic._id,
+                    url: topic.url,
+                    title: topic.title,
+                    nonce: likeDoc.nonce,
                 }
             })
         });
@@ -133,11 +135,14 @@ const getLikesToSync = async () => {
             select: 'url'
         })
         .then(likes => likes.map(like => {
+            const likeDoc = (like as unknown) as LikeDocument
+            const topic = (likeDoc.topic as unknown) as URLDocument
+            const UserDoc = (like.from as unknown) as UserDocument
             return {
-                url: like.topic.url,
+                url: topic.url,
                 liked: like.liked,
                 nonce: like.nonce,
-                submittedBy: like.from.walletAddress,
+                submittedBy: UserDoc.walletAddress,
             }
         }));
 }
