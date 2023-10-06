@@ -1,12 +1,13 @@
 {
-  "name": "backend-poc2",
+  "name": "channel4-backend",
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
   "scripts": {
     "test": "cross-env NODE_ENV=test jest --testTimeout=15000",
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "nodemon dist/server.js",
     "docker": "docker compose -f src/docker/docker-compose.yml",
     "docker:clean": "sudo rm -rf src/docker/db ./docker/logs",
     "populate": "node ./docker/populate.js"

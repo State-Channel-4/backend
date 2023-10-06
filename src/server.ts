@@ -1,8 +1,11 @@
-import dotenv from 'dotenv';
+import * as dotenv from "dotenv";
+dotenv.config({ path: __dirname+'/.env' });
+
 import cors from 'cors';
 import express from 'express';
 import mongoose from 'mongoose';
 import contractRoutes from './routes/contracts';
+
 
 // swagger imports
 import swaggerJsdoc from 'swagger-jsdoc';

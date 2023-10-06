@@ -134,4 +134,4 @@ docker/db
 docker/logs
 
 # ts to js code from ts
-out/
+dist/
