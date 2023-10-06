@@ -86,7 +86,7 @@ export const getUsersToSync = async () : Promise<string[]> => {
   return users.map(user => user.walletAddress);
 }
 
-export const markSynced = async (users: UserDocument[]) => {
+export const markSynced = async (users: string[]) => {
   await User.updateMany(
     { walletAddress: { $in: users } },
     { syncedToBlockchain: true }

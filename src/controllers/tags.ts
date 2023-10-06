@@ -74,7 +74,7 @@ export const getTagsToSync = async () : Promise<TagToSync[]> => {
     }));
 }
 
-export const markSynced = async (tags: string[]) => {
+export const markSynced = async (tags: TagToSync[]) => {
   await Tag.updateMany(
     { name: { $in: tags } },
     { syncedToBlockchain: true }

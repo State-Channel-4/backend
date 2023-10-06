@@ -4,7 +4,7 @@ const { generateToken } = require("../middleware/auth");
 import { Request, Response } from 'express';
 
 
-const login = async (req: Request, res: Response) => {
+export const login = async (req: Request, res: Response) => {
   try {
     const { signedMessage } = req.body;
 
@@ -27,7 +27,7 @@ const login = async (req: Request, res: Response) => {
   }
 };
 
-const recoverAccount = async (req: Request, res: Response) => {
+export const recoverAccount = async (req: Request, res: Response) => {
   const { mnemonic } = req.body;
   try {
     const mnemonicWallet = ethers.Wallet.fromPhrase(mnemonic);
@@ -47,9 +47,4 @@ const recoverAccount = async (req: Request, res: Response) => {
     }
     
   }
-};
-
-export = {
-  login,
-  recoverAccount,
 };

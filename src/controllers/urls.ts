@@ -4,7 +4,8 @@ import { Url, User } from '../models/schema';
 import { shuffle } from '../lib/utils';
 import * as TagControl from './tags';
 import * as UserControl from './users';
-import LikeControl from './likes';
+import { URLDocument, UserDocument, TagDocument } from '../models/schema';
+import { UrlToSync } from '../types/contract';
 
 
 const createURL = async (req: Request, res: Response) => {
@@ -100,7 +101,7 @@ const getMixedURLs = async (req: Request, res: Response) => {
   }
 };
 
-const getContentToSync = async () => {
+const getContentToSync = async (): Promise<UrlToSync[]> => {
   return await Url.find({ syncedToBlockchain: false })
     .populate({
       path: 'submittedBy',
@@ -113,16 +114,20 @@ const getContentToSync = async () => {
       select: 'name'
     })
     .then(urls => urls.map(url => {
+      const userDoc = (url.submittedBy as unknown) as UserDocument
       return {
         title: url.title,
         url: url.url,
-        submittedBy: url.submittedBy.walletAddress,
-        tagIds: url.tags.map(tag => tag.name)
+        submittedBy: userDoc.walletAddress,
+        tagIds: url.tags.map(tag => {
+          const tagDoc = (tag as unknown) as TagDocument
+          return tagDoc.name
+        })
       }
     }));
 };
 
-const markSynced = async (urls: string[]) => {
+const markSynced = async (urls: UrlToSync[]) => {
   await Url.updateMany(
     { title: { $in: urls } },
     { syncedToBlockchain: true }

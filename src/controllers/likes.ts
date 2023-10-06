@@ -1,10 +1,10 @@
 import { Like, User, Url, URLDocument, LikeDocument, UserDocument } from '../models/schema';
 import { Request, Response } from 'express';
 
-import { getUsersToSync } from './users';
+import { LikeToSync } from '../types/contract';
 
 
-const handleLike = async (req: Request, res: Response) => {
+export const handleLike = async (req: Request, res: Response) => {
     let url, liked, likeText, address;
     try {
         // unmarshall variables from http request
@@ -77,7 +77,7 @@ const handleLike = async (req: Request, res: Response) => {
 
 }
 
-const handleGetLikes = async (req: Request, res: Response) => {
+export const handleGetLikes = async (req: Request, res: Response) => {
     // unmarshall variables from http request
     const { params: { userId } } = req;
 
@@ -121,7 +121,7 @@ const handleGetLikes = async (req: Request, res: Response) => {
  * Get all current pending likes/ dislikes that would mutate the contract state
  * @returns - data for all non-synced pending likes/dislikes to commit
  */
-const getLikesToSync = async () => {
+export const getLikesToSync = async (): Promise<LikeToSync[]> => {
     return await Like
         .find({ syncedToBlockchain: 0 })
         .populate({
@@ -151,16 +151,9 @@ const getLikesToSync = async () => {
  * Remove all pending actions that have been synced with the smart contract
  * @todo: use oids to allow for limits to batching in one tx
  */
-const markSynced = async () => {
+export const markSynced = async () => {
     await Like.updateMany(
         { syncedToBlockchain: 0 },
         { syncedToBlockchain: 1 }
     );
 }
-
-module.exports = {
-    handleLike,
-    handleGetLikes,
-    getLikesToSync,
-    markSynced,
-};
