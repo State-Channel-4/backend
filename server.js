@@ -27,6 +27,7 @@ const specs = swaggerJsdoc(swaggerOptions);
 app.use("/api", contractRoutes);
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(specs, { explorer: true }));
 
+
 // connect to db
 mongoose
     .connect(process.env.MONGO_URI, {
