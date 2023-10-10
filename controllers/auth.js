@@ -1,6 +1,6 @@
-const { ethers } = require('ethers');
-const { User } = require('../models/schema');
-const { generateToken } = require('../middleware/auth');
+const { ethers } = require("ethers");
+const { User } = require("../models/schema");
+const { generateToken } = require("../middleware/auth");
 
 const login = async (req, res) => {
   try {
@@ -14,9 +14,6 @@ const login = async (req, res) => {
       { $setOnInsert: { walletAddress: signer } },
       { returnOriginal: false, upsert: true }
     );
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
     const token = generateToken(user);
     return res.status(200).json({ user: user, token: token });
   } catch (error) {
@@ -28,11 +25,13 @@ const recoverAccount = async (req, res) => {
   const { mnemonic } = req.body;
   try {
     const mnemonicWallet = ethers.Wallet.fromPhrase(mnemonic);
-    res.status(200).json({
-      address: mnemonicWallet.address,
-      public_key: mnemonicWallet.publicKey,
-      private_key: mnemonicWallet.privateKey,
-    });
+    res
+      .status(200)
+      .json({
+        address: mnemonicWallet.address,
+        public_key: mnemonicWallet.publicKey,
+        private_key: mnemonicWallet.privateKey,
+      });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }

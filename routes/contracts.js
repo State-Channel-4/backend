@@ -57,8 +57,6 @@ router.post("/user", userControl.createUser);
  *     responses:
  *       200:
  *         description: The user was logged in successfully
- *       404:
- *         description: User not found
  *       500:
  *         description: Server error
  */
