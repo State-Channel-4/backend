@@ -1,15 +1,18 @@
-const { Like, User, Url } = require('../models/schema');
-const { getUsersToSync } = require('./users');
+import { Like, User, Url, URLDocument, LikeDocument, UserDocument } from '../models/schema';
+import { Request, Response } from 'express';
+
+import { LikeToSync } from '../types/contract';
 
 
-const handleLike = async (req, res) => {
+export const handleLike = async (req: Request, res: Response) => {
+    let url, liked, likeText, address;
     try {
         // unmarshall variables from http request
         const {
             params: { id: urlId },
             body: { address, params, userId },
         } = req;
-        const [url, liked] = params;
+        [url, liked] = params;
         const likeText = liked ? 'like' : 'dislike';
 
         // check user exists
@@ -74,7 +77,7 @@ const handleLike = async (req, res) => {
 
 }
 
-const handleGetLikes = async (req, res) => {
+export const handleGetLikes = async (req: Request, res: Response) => {
     // unmarshall variables from http request
     const { params: { userId } } = req;
 
@@ -100,11 +103,13 @@ const handleGetLikes = async (req, res) => {
         })
         .then(user => {
             return user.likedUrls.map(like => {
+                const likeDoc = (like as unknown) as LikeDocument
+                const topic = (likeDoc.topic as unknown) as URLDocument
                 return {
-                    id: like.topic._id,
-                    url: like.topic.url,
-                    title: like.topic.title,
-                    nonce: like.nonce,
+                    id: topic._id,
+                    url: topic.url,
+                    title: topic.title,
+                    nonce: likeDoc.nonce,
                 }
             })
         });
@@ -116,7 +121,7 @@ const handleGetLikes = async (req, res) => {
  * Get all current pending likes/ dislikes that would mutate the contract state
  * @returns - data for all non-synced pending likes/dislikes to commit
  */
-const getLikesToSync = async () => {
+export const getLikesToSync = async (): Promise<LikeToSync[]> => {
     return await Like
         .find({ syncedToBlockchain: 0 })
         .populate({
@@ -130,11 +135,14 @@ const getLikesToSync = async () => {
             select: 'url'
         })
         .then(likes => likes.map(like => {
+            const likeDoc = (like as unknown) as LikeDocument
+            const topic = (likeDoc.topic as unknown) as URLDocument
+            const UserDoc = (like.from as unknown) as UserDocument
             return {
-                url: like.topic.url,
+                url: topic.url,
                 liked: like.liked,
                 nonce: like.nonce,
-                submittedBy: like.from.walletAddress,
+                submittedBy: UserDoc.walletAddress,
             }
         }));
 }
@@ -143,16 +151,9 @@ const getLikesToSync = async () => {
  * Remove all pending actions that have been synced with the smart contract
  * @todo: use oids to allow for limits to batching in one tx
  */
-const markSynced = async () => {
+export const markSynced = async () => {
     await Like.updateMany(
         { syncedToBlockchain: 0 },
         { syncedToBlockchain: 1 }
     );
 }
-
-module.exports = {
-    handleLike,
-    handleGetLikes,
-    getLikesToSync,
-    markSynced,
-};

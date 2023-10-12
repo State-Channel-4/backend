@@ -1,25 +1,27 @@
-const ethers = require("ethers");
-const ABI = require("../abi.json");
-const jwt = require("jsonwebtoken");
-let { expressjwt: express_jwt } = require("express-jwt");
-require("dotenv").config();
+import { Request, Response, NextFunction } from 'express';
+import ethers from 'ethers';
+import ABI from '../abi.json';
+import jwt from 'jsonwebtoken';
+//import { expressjwt as express_jwt } from 'express-jwt';
+import { expressjwt } from 'express-jwt';
 
-const jwt_secret = process.env.JWT_SECRET;
 
-const authenticate = express_jwt({ secret: jwt_secret, algorithms: ["HS256"] });
+const jwt_secret = process.env.JWT_SECRET as string;
+
+export const authenticate = expressjwt({ secret: jwt_secret, algorithms: ["HS256"] });
 console.log("authenticate", authenticate);
 
-const generateToken = (user) => {
+export const generateToken = (user: { _id: string }) => {
     const token = jwt.sign({ id: user._id }, jwt_secret, { expiresIn: "1d" });
     return token;
 };
 
-const verifySignedMessage = async (req, res, next) => {
+export const verifySignedMessage = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { address, signature, originalMessage } = req.body;
 
         // Recover the address from the signature
-        const recoveredAddress = ethers.utils.verifyMessage(
+        const recoveredAddress = ethers.verifyMessage(
             originalMessage,
             signature
         );
@@ -35,15 +37,15 @@ const verifySignedMessage = async (req, res, next) => {
     }
 };
 
-const verifySignedFunctionMessage = async (req, res, next) => {
+export const verifySignedFunctionMessage = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { signedMessage, address, functionName, params } = req.body;
         // signed transaction string to object
         const tx = ethers.Transaction.from(signedMessage);
         // Recreate the meta transaction
-        const channel4Contract = new ethers.Contract(process.env.CONTRACT_ADDRESS, ABI);
+        const channel4Contract = new ethers.Contract(process.env.CONTRACT_ADDRESS as string, ABI);
         const metaTransaction = await channel4Contract[
-            functionName
+            functionName as string
         ].populateTransaction(...params);
         // Compare server-side tx with client-side tx
         if (metaTransaction.data !== tx.data) {
@@ -55,8 +57,8 @@ const verifySignedFunctionMessage = async (req, res, next) => {
         }
         // Compare the recovered address with the provided address
         const recoveredAddress = ethers.recoverAddress(
-            tx.unsignedHash,
-            tx.signature
+            tx.unsignedHash as string,
+            tx.signature as unknown as string // note(jay) : not sure of conversion from unknown to str
         );
         if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
             return res
@@ -67,7 +69,7 @@ const verifySignedFunctionMessage = async (req, res, next) => {
         }
         // Check the tx is sent to the right contract address
         if (
-            tx.to.toLowerCase() !== process.env.CONTRACT_ADDRESS.toLowerCase()
+            tx.to?.toLowerCase() !== (process.env.CONTRACT_ADDRESS as string).toLowerCase()
         ) {
             return res
                 .status(401)
@@ -80,11 +82,4 @@ const verifySignedFunctionMessage = async (req, res, next) => {
         console.log(error);
         res.status(500).json({ error: "Error verifying signature" });
     }
-};
-
-module.exports = {
-    authenticate,
-    generateToken,
-    verifySignedMessage,
-    verifySignedFunctionMessage,
 };
