@@ -93,7 +93,7 @@ const getMixedURLs = async (req: Request, res: Response) => {
     const urls = await __getURLsFromDb(tags, limit);
 
     res.status(200).json({
-      urls: shuffle(urls.map(url => url.url)),
+      urls: shuffle(urls),
     });
   } catch (err) {
     console.error(err);
