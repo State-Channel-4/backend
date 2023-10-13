@@ -1,6 +1,7 @@
-export const shuffle = (array: string[]): string[] => {
+import { URLDocument } from "../models/schema";
+export const shuffle = (array: URLDocument[]): URLDocument[] => {
   let currentIndex = array.length;
-  let temporaryValue: string;
+  let temporaryValue: URLDocument;
   let randomIndex: number;
 
   while (currentIndex !== 0) {
@@ -11,6 +12,5 @@ export const shuffle = (array: string[]): string[] => {
     array[currentIndex] = array[randomIndex];
     array[randomIndex] = temporaryValue;
   }
-
   return array;
 };
