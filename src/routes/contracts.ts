@@ -7,6 +7,7 @@ import {
   userControl,
   likeControl
 } from "../controllers/index";
+import { createMatch } from '../controllers/matchmaking';
 
 import {
   authenticate,
@@ -385,5 +386,7 @@ router.get("/tag", tagControl.getAllTags);
  */
 // sync data to smart contract
 router.get("/sync", contractControl.syncDataToSmartContract);
+
+router.get("/match", createMatch);
 
 export default router;
