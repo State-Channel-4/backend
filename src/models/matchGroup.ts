@@ -17,7 +17,7 @@ const MatchGroupSchema = new mongoose.Schema<MatchGroupDocument>({
     }],
 })
 
-const MatchGroup: Model<MatchGroupDocument> = mongoose.model('Match', MatchGroupSchema);
+const MatchGroup: Model<MatchGroupDocument> = mongoose.model('MatchGroup', MatchGroupSchema);
 
 export {
     MatchGroup, MatchGroupDocument

@@ -20,3 +20,8 @@ export interface UrlToSync {
     submittedBy: string,
     tagIds: string[],
 }
+
+export interface MatchGroupType {
+    key: number,
+    users: string[],
+}

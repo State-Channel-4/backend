@@ -3,7 +3,7 @@ const { User } = require("../models/schema");
 import { Request, Response } from 'express';
 import { Types } from 'mongoose';
 import { UserDocument, URLDocument } from '../models/schema';
-
+import { addToGroup } from '../lib/grouping';
 
 export const createUser = async (req: Request, res: Response) => {
   const { address } = req.body;
