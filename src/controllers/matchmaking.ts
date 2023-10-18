@@ -3,6 +3,7 @@ import { MatchGroup } from "../models/matchGroup"
 import { Match, MatchDocument } from "../models/match";
 import { User } from "../models/schema";
 import mongoose from "mongoose";
+import { Request, Response } from 'express';
 /*
 1. Create a new Match
 2. Close the match
@@ -14,7 +15,7 @@ inside DB
 "2" : [user3, user4]
 
 */
-export const createMatch = async() => {
+export const createMatch = async(req: Request, res: Response) => {
     let matches = [];
     const MatchGroups = await MatchGroup.find();
     for (const groupKey in MatchGroups) {
@@ -27,12 +28,13 @@ export const createMatch = async() => {
                         const match = await Match.create(
                             { user1: group.users[i]._id, user2: group.users[j]._id },
                         )
+                        // update users matched field
+                        await User.updateMany({ _id: { $in: [group.users[i]._id, group.users[j]._id] } }, { matched: true });
+
                         // remove matched users from MatchGroups
                         MatchGroups[groupKey].users.splice(i, 1);
                         MatchGroups[groupKey].users.splice(i, j);
                         matches.push(match);
-                        // update users matched field
-                        await User.updateMany({ _id: { $in: [group.users[i]._id, group.users[j]._id] } }, { matched: true });
                     }
                 }
             }
@@ -53,7 +55,7 @@ export const createMatch = async() => {
         usersRemaining.splice(0, 2);
     }
     console.log("final matches : ", matches);
-    return matches;
+    return res.status(201).json({ matches: matches });
 
 }
 
