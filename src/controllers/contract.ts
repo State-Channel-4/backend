@@ -8,7 +8,7 @@ import * as LikeControl from './likes';
 
 // Models
 import { User, Tag, Url } from '../models/schema';
-import ABI from '../abi.json';
+import ABI from '../abi/channel4.json';
 
 const __createContract = () => {
   const provider = new ethers.JsonRpcProvider(process.env.RPC_URL as string);

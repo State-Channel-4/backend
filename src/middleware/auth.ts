@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import ethers from 'ethers';
-import ABI from '../abi.json';
+import ABI from '../abi/channel4.json';
 import jwt from 'jsonwebtoken';
 //import { expressjwt as express_jwt } from 'express-jwt';
 import { expressjwt } from 'express-jwt';
