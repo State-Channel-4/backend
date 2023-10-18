@@ -2,34 +2,56 @@
   {
     "inputs": [
       {
-        "internalType": "string",
-        "name": "title",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "url",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "tag",
-        "type": "string"
-      },
-      {
-        "internalType": "uint256",
-        "name": "slashingFee",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "backendRegistrationFee",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "timeThreshold",
-        "type": "uint256"
+        "components": [
+          {
+            "internalType": "string",
+            "name": "title",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "url",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "tag",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "slashingFee",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "backendRegistrationFee",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "timeThreshold",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "registrationThreshold",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "likesInPeriodThreshold",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "rewardsAmount",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct ConstructorObj",
+        "name": "constructorObj",
+        "type": "tuple"
       }
     ],
     "stateMutability": "nonpayable",
@@ -149,9 +171,36 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "userAddress",
-        "type": "address"
+        "components": [
+          {
+            "internalType": "address",
+            "name": "userAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "numberOfLikes",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256[]",
+            "name": "submittedContent",
+            "type": "uint256[]"
+          },
+          {
+            "internalType": "uint256",
+            "name": "registeredAt",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "numberOfLikesInPeriod",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct Data.User",
+        "name": "user",
+        "type": "tuple"
       }
     ],
     "name": "createUserIfNotExists",
@@ -291,13 +340,23 @@
           },
           {
             "internalType": "uint256",
-            "name": "numberOfLikedContent",
+            "name": "numberOfLikes",
             "type": "uint256"
           },
           {
             "internalType": "uint256[]",
             "name": "submittedContent",
             "type": "uint256[]"
+          },
+          {
+            "internalType": "uint256",
+            "name": "registeredAt",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "numberOfLikesInPeriod",
+            "type": "uint256"
           }
         ],
         "internalType": "struct Data.User[]",
@@ -455,13 +514,23 @@
           },
           {
             "internalType": "uint256",
-            "name": "numberOfLikedContent",
+            "name": "numberOfLikes",
             "type": "uint256"
           },
           {
             "internalType": "uint256[]",
             "name": "submittedContent",
             "type": "uint256[]"
+          },
+          {
+            "internalType": "uint256",
+            "name": "registeredAt",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "numberOfLikesInPeriod",
+            "type": "uint256"
           }
         ],
         "internalType": "struct Data.User",
@@ -559,6 +628,19 @@
         "internalType": "struct Data.Content[]",
         "name": "",
         "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "lastMonth",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -733,6 +815,13 @@
   },
   {
     "inputs": [],
+    "name": "receiveDonations",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "rechargeVault",
     "outputs": [],
     "stateMutability": "payable",
@@ -753,11 +842,51 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "rewardsVault",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
-        "internalType": "address[]",
-        "name": "usersToAdd",
-        "type": "address[]"
+        "components": [
+          {
+            "internalType": "address",
+            "name": "userAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "numberOfLikes",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256[]",
+            "name": "submittedContent",
+            "type": "uint256[]"
+          },
+          {
+            "internalType": "uint256",
+            "name": "registeredAt",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "numberOfLikesInPeriod",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct Data.User[]",
+        "name": "usersToSync",
+        "type": "tuple[]"
       },
       {
         "components": [
@@ -1010,6 +1139,20 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "withdrawRemainingRewards",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "withdrawRewards",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   }
 ]
