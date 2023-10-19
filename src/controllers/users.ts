@@ -82,17 +82,22 @@ export const detachURL = async (userId: Types.ObjectId, urlId: Types.ObjectId) =
 };
 
 export const getUsersToSync = async () : Promise<string[]> => {
-  const users: UserDocument[] = await User.find({ syncedToBlockchain: false });
+  const users: UserDocument[] = await User.find({ syncedToBlockchain: false }).populate({
+    path: 'submittedUrls',
+    model: 'Url',
+  });
+  console.log(users);
+
   return users.map(user => user.walletAddress);
 }
 
 export const markSynced = async (users: string[]) => {
   await User.updateMany(
     { walletAddress: { $in: users } },
-    { syncedToBlockchain: true }
+    { syncedToBlockchain: false }
   );
 }
-// dow we need url param in getNonce? 
+// dow we need url param in getNonce?
 export const getNonce = async (user: UserDocument, url: URLDocument) => {
   return await User.findOne({ walletAddress: user })
     .populate({
