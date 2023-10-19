@@ -38,8 +38,10 @@ const syncDataToSmartContract = async (_req: Request, res: Response) => {
 
   // Submit a batch of data to the smart contract to sync
   try {
+    /* TODO: uncomment this
     let tx = await contract.syncState(users, tags, urls, likes);
     await tx.wait();
+    */
   } catch (error: any) {
     console.error("error: ", error);
     return res.status(500).json({ error: `Failed to sync state: ${error.message}` });
