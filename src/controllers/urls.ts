@@ -1,16 +1,16 @@
 import { Request, Response } from 'express';
-import mongoose, { Types } from 'mongoose';
-import { Url, User } from '../models/schema';
+import mongoose from 'mongoose';
+import { Url } from '../models/schema';
 import { shuffle } from '../lib/utils';
 import * as TagControl from './tags';
 import * as UserControl from './users';
-import { URLDocument, UserDocument, TagDocument } from '../models/schema';
+import { UserDocument, TagDocument } from '../models/schema';
 import { UrlToSync } from '../types/contract';
 
 
 const createURL = async (req: Request, res: Response) => {
   try {
-    const [title, url, _submittedBy, _likes, tags] = req.body.params;
+    const [title, url, tags] = req.body.params;
     const submittedBy = req.body.userId;
 
     if (!tags || tags.length === 0) {
