@@ -1,7 +1,7 @@
 // create matches from MatchGroup
 import { MatchGroup } from "../models/matchGroup"
 import { Match, MatchDocument } from "../models/match";
-import { User } from "../models/schema";
+import { User, Url } from "../models/schema";
 import mongoose from "mongoose";
 import { Request, Response } from 'express';
 /*
@@ -21,22 +21,28 @@ export const createMatch = async(req: Request, res: Response) => {
     for (const groupKey in MatchGroups) {
         if (MatchGroups.hasOwnProperty(groupKey)) {
             const group = MatchGroups[groupKey];
-            console.log("group : ", group);
+            console.log("group  is ......... : ", group);
             if (group.users.length >= 2) {
                 for(let i = 0; i < group.users.length; i++) {
                     for (let j = i+ 1; j < group.users.length; j++) {
                         const match = await Match.create(
-                            { user1: group.users[i]._id, user2: group.users[j]._id },
+                            { user1: group.users[i]._id, user2: group.users[j]._id, threshold: parseInt(groupKey) },
                         )
                         // update users matched field
                         await User.updateMany({ _id: { $in: [group.users[i]._id, group.users[j]._id] } }, { matched: true });
+                        // remove users from matchgroup
+                        const res = await MatchGroup.updateMany({}, { $pull: { users: {$in: [group.users[i]._id, group.users[j]._id]} } });
+                        console.log("result : ", res);
 
-                        // remove matched users from MatchGroups
+                        // remove matched users from MatchGroups array
                         MatchGroups[groupKey].users.splice(i, 1);
                         MatchGroups[groupKey].users.splice(i, j);
                         matches.push(match);
                     }
                 }
+            }
+            else {
+                console.log("not enough users in group : ", group.users);
             }
         }
     }
@@ -44,7 +50,9 @@ export const createMatch = async(req: Request, res: Response) => {
     let usersRemaining = [];
     for (const groupkey in MatchGroups) {
         const group = MatchGroups[groupkey];
-        usersRemaining.push(group);
+        if(group.users.length > 0) {
+            usersRemaining.push(group);
+        }
     }
     while (usersRemaining.length >= 2)
     {
@@ -59,17 +67,26 @@ export const createMatch = async(req: Request, res: Response) => {
 
 }
 
+// populate match details from Match
+export const populateMatch = async(matchObj : MatchDocument) => {
+    // get all the urls submitted by user1 where verified is false and limit is threshold
+    const user1Urls = await Url.find({ user: matchObj.user1, verified: false  }).limit(matchObj.threshold);
+    const user2Urls = await Url.find({ user: matchObj.user2, verified: false }).limit(matchObj.threshold);
+    return { user1Urls: user1Urls, user2Urls: user2Urls };
+
+}
+
+
 // get match by matchID
 export const getMatchbyMatchID = async (matchID: string) => {
     const match = await Match.findOne({ _id: matchID });
-    return match;
+    if(!match) {
+        throw new Error("match with provided matchID not found");
+    }
+    const urls = await populateMatch(match);
+    return { match: match, urls: urls };
 }
 
-// get match by userID
-export const getMatchbyUserID = async (userID: string) => {
-    const match = await Match.findOne({ user1: userID });
-    return match;
-}
 
 export const updateMatchStatus = async(matchID: string, status: string) :Promise<MatchDocument | { error: string; }> => {
     if (status in ['ready', 'running', 'completed', 'deadlock'] === false) {

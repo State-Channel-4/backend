@@ -6,6 +6,7 @@ interface MatchDocument extends Document {
     user2: mongoose.Types.ObjectId;
     user2Completed: boolean;
     status: string;
+    threshold: number; // threshold is max limit of urls allowed to be validated, depnds on key in MatchGroup
     createdAt: Date;
     updatedAt: Date;
 }
@@ -31,6 +32,10 @@ const MatchSchema = new mongoose.Schema<MatchDocument>({
         type: String,
         enum: ['ready', 'running', 'completed', 'deadlock'],
         default: 'ready',
+    },
+    threshold: {
+        type: Number,
+        default: 1,
     },
     createdAt: {
         type: Date,

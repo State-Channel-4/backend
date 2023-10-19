@@ -7,7 +7,7 @@ import {
   userControl,
   likeControl
 } from "../controllers/index";
-import { createMatch } from '../controllers/matchmaking';
+import { createMatch } from '../lib/matchmaking';
 
 import {
   authenticate,

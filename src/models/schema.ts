@@ -17,6 +17,7 @@ interface URLDocument extends Document {
   url: string;
   submittedBy: mongoose.Types.ObjectId;
   likes: number;
+  verified: boolean;
   tags: Array<mongoose.Types.ObjectId>;
   createdAt: Date;
   updatedAt: Date;
@@ -94,6 +95,10 @@ const URLSchema = new mongoose.Schema<URLDocument>({
   likes: {
     type: Number,
     default: 0,
+  },
+  verified: {
+    type: Boolean,
+    default: false,
   },
   tags: [{
     type: mongoose.Schema.Types.ObjectId,
