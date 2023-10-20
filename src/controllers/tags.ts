@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { Types } from 'mongoose';
-import { Tag, TagDocument, UserDocument } from '../models/schema';
-import { TagToSync } from '../types/contract';
+import { Tag, TagDocument, URLDocument, UserDocument } from '../models/schema';
+import { Data } from '../types/typechain/Channel4';
 
 export const createTag = async (req: Request, res: Response) => {
   try {
@@ -58,23 +58,26 @@ export const detachURL = async (tags: Types.ObjectId[], urlId: Types.ObjectId) =
   }
 };
 
-export const getTagsToSync = async () : Promise<TagToSync[]> => {
-  return Tag.find({ syncedToBlockchain: false })
-    .populate({
-      path: 'createdBy',
-      model: 'User',
-      select: 'walletAddress'
-    })
-    .then(tags => tags.map(tag => {
-      const createdBy = (tag.createdBy as unknown) as UserDocument
-      return {
-        name: tag.name,
-        createdBy: createdBy.walletAddress,
-      }
-    }));
+export const getTagsToSync = async () : Promise<Data.TagToSyncStruct[]> => {
+  const tags = await Tag.find({ syncedToBlockchain: false }).populate({
+    path: 'createdBy',
+    model: 'User',
+    select: 'walletAddress',
+  }).populate({
+    path: 'urls',
+    model: 'Url',
+    select: 'title',
+  });
+  return tags.map(tag => {
+    return {
+      name: tag.name,
+      createdBy: (tag.createdBy as unknown as UserDocument).walletAddress,
+      contentIds: (tag.urls as unknown as URLDocument[]).map(url => url.title),
+    };
+  });
 }
 
-export const markSynced = async (tags: TagToSync[]) => {
+export const markSynced = async (tags: string[]) => {
   await Tag.updateMany(
     { name: { $in: tags } },
     { syncedToBlockchain: true }
