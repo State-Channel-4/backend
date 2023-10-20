@@ -67,6 +67,7 @@ export const attachURL = async (userId : Types.ObjectId, urlId: Types.ObjectId) 
   const user = await User.findById(userId);
   if (user) {
     user.submittedUrls.push(urlId);
+    user.syncedToBlockchain = false;
     await user.save();
   }
 };
@@ -77,6 +78,7 @@ export const detachURL = async (userId: Types.ObjectId, urlId: Types.ObjectId) =
     const index = user.submittedUrls.indexOf(urlId);
     if (index > -1) {
       user.submittedUrls.splice(index, 1);
+      user.syncedToBlockchain = false;
       await user.save();
     }
   }

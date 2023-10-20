@@ -40,6 +40,7 @@ export const attachURL = async (tags: Types.ObjectId[], urlId: Types.ObjectId) =
     const tag: TagDocument | null = await Tag.findById(tagId);
     if (tag) {
       tag.urls.push(urlId);
+      tag.syncedToBlockchain = false;
       await tag.save();
     }
   }
@@ -52,6 +53,7 @@ export const detachURL = async (tags: Types.ObjectId[], urlId: Types.ObjectId) =
       const index = tag.urls.indexOf(urlId);
       if (index > -1) {
         tag.urls.splice(index, 1);
+        tag.syncedToBlockchain = false;
         await tag.save();
       }
     }
