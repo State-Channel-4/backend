@@ -6,9 +6,9 @@ import * as UserControl from './users';
 import * as LikeControl from './likes';
 
 
-// Models
-import { User, Tag, Url } from '../models/schema';
-import ABI from '../abi.json';
+// Contract
+import ABI from '../abi/channel4.json';
+import { Channel4 } from '../types/typechain/Channel4';
 
 const __createContract = () => {
   const provider = new ethers.JsonRpcProvider(process.env.RPC_URL as string);
@@ -18,12 +18,12 @@ const __createContract = () => {
     ABI,
     wallet
   );
-  return contract;
+  return contract as unknown as Channel4;
 };
 
 const syncDataToSmartContract = async (_req: Request, res: Response) => {
   // Connect to smart contract
-  let contract: ethers.Contract;
+  let contract: Channel4;
   try {
     contract = __createContract();
   } catch (error: any) {
@@ -38,8 +38,10 @@ const syncDataToSmartContract = async (_req: Request, res: Response) => {
 
   // Submit a batch of data to the smart contract to sync
   try {
+    /* TODO: uncomment this
     let tx = await contract.syncState(users, tags, urls, likes);
     await tx.wait();
+    */
   } catch (error: any) {
     console.error("error: ", error);
     return res.status(500).json({ error: `Failed to sync state: ${error.message}` });

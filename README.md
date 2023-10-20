@@ -11,6 +11,9 @@ cp .env.example .env
 # 2 - Install dependencies
 npm install
 
+# 3 - Generate the contract types
+npm run typechain:create
+
 # 3 - Run the server in dev mode
 npm run dev
 

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import ethers from 'ethers';
-import ABI from '../abi.json';
+import ABI from '../abi/channel4.json';
 import jwt from 'jsonwebtoken';
 //import { expressjwt as express_jwt } from 'express-jwt';
 import { expressjwt } from 'express-jwt';
@@ -38,6 +38,9 @@ export const verifySignedMessage = async (req: Request, res: Response, next: Nex
 };
 
 export const verifySignedFunctionMessage = async (req: Request, res: Response, next: NextFunction) => {
+    next();
+    /*
+    TODO: this will be better implemented with SIWE and the WalletConnect integration
     try {
         const { signedMessage, address, functionName, params } = req.body;
         // signed transaction string to object
@@ -82,4 +85,5 @@ export const verifySignedFunctionMessage = async (req: Request, res: Response, n
         console.log(error);
         res.status(500).json({ error: "Error verifying signature" });
     }
+    */
 };
