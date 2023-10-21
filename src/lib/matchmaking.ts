@@ -26,7 +26,7 @@ export const createMatch = async(req: Request, res: Response) => {
                 for(let i = 0; i < group.users.length; i++) {
                     for (let j = i+ 1; j < group.users.length; j++) {
                         const match = await Match.create(
-                            { user1: group.users[i]._id, user2: group.users[j]._id, threshold: parseInt(groupKey) },
+                            { user1 :{id: group.users[i]._id}, user2: {id: group.users[j]._id}, threshold: parseInt(groupKey) },                            
                         )
                         // update users matched field
                         await User.updateMany({ _id: { $in: [group.users[i]._id, group.users[j]._id] } }, { matched: true });
@@ -68,23 +68,24 @@ export const createMatch = async(req: Request, res: Response) => {
 }
 
 // populate match details from Match
-export const populateMatch = async(matchObj : MatchDocument) => {
+export const populateMatch = async(matchObj : MatchDocument) : Promise<MatchDocument> => {
     // get all the urls submitted by user1 where verified is false and limit is threshold
-    const user1Urls = await Url.find({ user: matchObj.user1, verified: false  }).limit(matchObj.threshold);
-    const user2Urls = await Url.find({ user: matchObj.user2, verified: false }).limit(matchObj.threshold);
-    return { user1Urls: user1Urls, user2Urls: user2Urls };
+    matchObj.user1.urls = await Url.find({ submittedBy: matchObj.user1.id, verified: false  }).limit(matchObj.threshold);
+    matchObj.user2.urls = await Url.find({ submittedBy: matchObj.user2.id, verified: false }).limit(matchObj.threshold);
+    return matchObj;
 
 }
 
 
 // get match by matchID
 export const getMatchbyMatchID = async (matchID: string) => {
-    const match = await Match.findOne({ _id: matchID });
-    if(!match) {
+    let matchObj = await Match.findOne({ _id: matchID });
+    if(!matchObj) {
         throw new Error("match with provided matchID not found");
     }
-    const urls = await populateMatch(match);
-    return { match: match, urls: urls };
+    const match = await populateMatch(matchObj);
+    console.log({match});
+    return match;
 }
 
 
@@ -116,19 +117,19 @@ export const updateUserCompleted = async(matchID: string, userID: mongoose.Types
     if(!match) {
         throw new Error("Invalid matchID. Match not found");
     }
-    if (match.user1._id === userID) {
-        match.user1Completed = true;
+    if (match.user1.id === userID) {
+        match.user1.completed = true;
     }
-    else if (match.user2._id === userID) {
-        match.user2Completed = true;
+    else if (match.user2.id === userID) {
+        match.user2.completed = true;
     }
     else {
         const user = await User.findById({_id: userID});
         if (user?.role === 'mod') {
             if(updateUser === 'user1') {
-                match.user1Completed = true;
+                match.user1.completed = true;
             } else if (updateUser === 'user2') {
-                match.user2Completed = true;
+                match.user2.completed = true;
             }
             else {
                 console.log("invalid user");
@@ -149,9 +150,9 @@ export const markMatchCompleted = async(matchID: string) => {
     if(!match) {
         throw new Error("Match not found with provided matchID");
     }
-    if(match.user1Completed === true && match.user2Completed === true) {
+    if(match.user1.completed === true && match.user2.completed === true) {
         match.status = 'completed';
-        await User.updateMany({ _id: { $in: [match.user1._id, match.user2._id] } }, { matched: false });
+        await User.updateMany({ _id: { $in: [match.user1.id, match.user2.id] } }, { matched: false });
         match = await match.save()
     }
     return match;    

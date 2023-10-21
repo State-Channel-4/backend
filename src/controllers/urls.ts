@@ -1,18 +1,21 @@
 import { Request, Response } from 'express';
 import mongoose, { Types } from 'mongoose';
-import { Url, User } from '../models/schema';
+import { Url } from '../models/schema';
 import { shuffle } from '../lib/utils';
 import * as TagControl from './tags';
 import * as UserControl from './users';
-import { URLDocument, UserDocument, TagDocument } from '../models/schema';
+import {  UserDocument, TagDocument } from '../models/schema';
 import { UrlToSync } from '../types/contract';
 
 
 const createURL = async (req: Request, res: Response) => {
   try {
-    const [title, url, _submittedBy, _likes, tags] = req.body.params;
+      const [title, url, tags] = req.body.params;
     const submittedBy = req.body.userId;
-
+    console.log("createURL body : ", req.body);
+    console.log("tags : ", tags)
+    console.log("title : ", title);
+    console.log("url : ", url);
     if (!tags || tags.length === 0) {
       return res.status(400).json({ error: "Please add some tags to the URL" });
     }

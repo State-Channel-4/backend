@@ -7,7 +7,6 @@ import * as LikeControl from './likes';
 
 
 // Models
-import { User, Tag, Url } from '../models/schema';
 import ABI from '../abi.json';
 
 const __createContract = () => {
