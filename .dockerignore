@@ -1,0 +1,32 @@
+# Ignore version control system files
+.git
+.gitignore
+
+# Ignore development and build-related files
+node_modules
+npm-debug.log
+yarn-error.log
+package-lock.json
+pnpm-lock.yaml
+
+# Ignore test files
+__tests__
+test
+tests
+
+# Ignore Docker build context files
+Dockerfile
+
+# Ignore other build-related files
+*.tar
+*.tar.gz
+
+# Ignore temporary and system files
+*.log
+*.swp
+.DS_Store
+Thumbs.db
+
+# Ignore user-specific files
+npm-debug.log
+yarn-error.log

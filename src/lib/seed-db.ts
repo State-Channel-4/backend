@@ -1,11 +1,14 @@
-const faker = require('faker');
-const ethers = require('ethers');
-const mongoose = require('mongoose');
-const { User, Tag, Url } = require('../models/schema');
-require('dotenv').config()
+import faker from 'faker';
+import ethers from 'ethers';
+import mongoose from 'mongoose';
+import { User, Tag, Url } from '../models/schema';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(process.env.MONGO_URI as string, {dbName: process.env.DB_NAME as string})
   .then(() => {
     console.log('Connected to MongoDB');
     // Populate data

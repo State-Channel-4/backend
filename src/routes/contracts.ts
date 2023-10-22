@@ -1,17 +1,18 @@
-const express = require("express");
-const {
+import express from 'express';
+import {
   authControl,
   contractControl,
   tagControl,
   urlControl,
   userControl,
   likeControl
-} = require("../controllers/index");
-const {
+} from "../controllers/index";
+
+import {
   authenticate,
   verifySignedMessage,
   verifySignedFunctionMessage,
-} = require("../middleware/auth");
+} from "../middleware/auth";
 
 const router = express.Router();
 
@@ -383,4 +384,4 @@ router.get("/tag", tagControl.getAllTags);
 // sync data to smart contract
 router.get("/sync", contractControl.syncDataToSmartContract);
 
-module.exports = router;
+export default router;

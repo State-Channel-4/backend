@@ -132,3 +132,10 @@ dist
 # docker
 docker/db
 docker/logs
+
+# ts to js code from ts
+dist/
+
+
+# typechain files
+src/types/typechain/
