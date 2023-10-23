@@ -38,19 +38,17 @@ const syncDataToSmartContract = async (_req: Request, res: Response) => {
 
   // Submit a batch of data to the smart contract to sync
   try {
-    /* TODO: uncomment this
     let tx = await contract.syncState(users, tags, urls, likes);
     await tx.wait();
-    */
   } catch (error: any) {
     console.error("error: ", error);
     return res.status(500).json({ error: `Failed to sync state: ${error.message}` });
   }
 
   // Mark all as synced
-  await UserControl.markSynced(users);
-  await TagControl.markSynced(tags);
-  await URLControl.markSynced(urls);
+  await UserControl.markSynced(users.map(user => user.userAddress as string));
+  await TagControl.markSynced(tags.map(tag => tag.name));
+  await URLControl.markSynced(urls.map(url => url.url));
   await LikeControl.markSynced();
 
   // Return success on syncing smart contract with backend state

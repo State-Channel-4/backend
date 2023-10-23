@@ -3,6 +3,7 @@ const { User } = require("../models/schema");
 import { Request, Response } from 'express';
 import { Types } from 'mongoose';
 import { UserDocument, URLDocument } from '../models/schema';
+import { Data } from '../types/typechain/Channel4';
 
 
 export const createUser = async (req: Request, res: Response) => {
@@ -66,6 +67,7 @@ export const attachURL = async (userId : Types.ObjectId, urlId: Types.ObjectId) 
   const user = await User.findById(userId);
   if (user) {
     user.submittedUrls.push(urlId);
+    user.syncedToBlockchain = false;
     await user.save();
   }
 };
@@ -76,25 +78,34 @@ export const detachURL = async (userId: Types.ObjectId, urlId: Types.ObjectId) =
     const index = user.submittedUrls.indexOf(urlId);
     if (index > -1) {
       user.submittedUrls.splice(index, 1);
+      user.syncedToBlockchain = false;
       await user.save();
     }
   }
 };
 
-export const getUsersToSync = async () : Promise<string[]> => {
+export const getUsersToSync = async () : Promise<Data.UserStruct[]> => {
   const users: UserDocument[] = await User.find({ syncedToBlockchain: false }).populate({
     path: 'submittedUrls',
     model: 'Url',
   });
-  console.log(users);
-
-  return users.map(user => user.walletAddress);
+  return users.map((user) => {
+    // TODO: save the contract index of each content
+    const submittedContent = (user.submittedUrls as unknown as URLDocument[]).map((_url, index) => index);
+    return {
+      userAddress: user.walletAddress,
+      numberOfLikes: user.likedUrls.length,
+      submittedContent: submittedContent,
+      registeredAt: Math.floor(user.createdAt.getTime() / 1000),
+      numberOfLikesInPeriod: 0,
+    };
+  });
 }
 
 export const markSynced = async (users: string[]) => {
   await User.updateMany(
     { walletAddress: { $in: users } },
-    { syncedToBlockchain: false }
+    { syncedToBlockchain: true }
   );
 }
 // dow we need url param in getNonce?

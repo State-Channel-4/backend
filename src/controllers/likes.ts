@@ -64,6 +64,7 @@ export const handleLike = async (req: Request, res: Response) => {
         }
 
         // update the # of likes on the content
+        content.syncedToBlockchain = false;
         content.likes += liked ? 1 : -1;
         await content.save();
 
