@@ -50,11 +50,3 @@ export const recoverAccount = async (req: Request, res: Response) => {
 
   }
 };
-<<<<<<< HEAD:controllers/auth.js
-
-module.exports = {
-  login,
-  recoverAccount,
-};
-=======
->>>>>>> main:src/controllers/auth.ts
