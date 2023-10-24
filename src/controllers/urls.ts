@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import mongoose, { Types } from 'mongoose';
+import mongoose from 'mongoose';
 import { Url } from '../models/schema';
 import { shuffle } from '../lib/utils';
 import * as TagControl from './tags';
@@ -12,10 +12,6 @@ const createURL = async (req: Request, res: Response) => {
   try {
       const [title, url, tags] = req.body.params;
     const submittedBy = req.body.userId;
-    console.log("createURL body : ", req.body);
-    console.log("tags : ", tags)
-    console.log("title : ", title);
-    console.log("url : ", url);
     if (!tags || tags.length === 0) {
       return res.status(400).json({ error: "Please add some tags to the URL" });
     }
@@ -36,6 +32,24 @@ const createURL = async (req: Request, res: Response) => {
     return res.status(500).json({ error: "Server error" });
   }
 };
+
+export const  updateUrlVerificationStatus = async (req: Request, res: Response) => {
+  try {
+    console.log("body params : ", req.body);
+    const { urlId, status } = req.body;
+    // get array of urlID and update all with verified to true
+    const urls = await Url.updateMany({ _id: { $in: urlId } }, { verified: status });
+    console.log("urls : ", urls);    
+    if(!urls) {
+      return res.status(400).json({ error: "URL not found" });
+    }
+    return res.status(200).json({ message: "URL verification status updated successfully" });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Server error" });
+  }
+
+}
 
 const deleteURL = async (req: Request, res: Response) => {
   try {

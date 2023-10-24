@@ -1,5 +1,6 @@
 import { UserDocument } from "../models/schema"
 import { MatchGroupDocument, MatchGroup } from "../models/matchGroup"
+import mongoose from "mongoose";
 export const addToGroup = async (user: UserDocument, key: number): Promise<MatchGroupDocument> => {
     /*
     3 cases
@@ -29,3 +30,14 @@ export const addToGroup = async (user: UserDocument, key: number): Promise<Match
     return newGroup;
 }
 
+export const getGroup = async(userId: string): Promise<MatchGroupDocument | null> => {
+    console.log("user id provided : ", userId);
+    const userIdObj = new mongoose.Types.ObjectId(userId);
+    const group = await MatchGroup.findOne({ users: userIdObj });
+    if(!group) {
+        console.log("user not in group");
+        return null;
+    }
+    console.log("group : ", group);
+    return group;
+}

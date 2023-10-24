@@ -5,15 +5,18 @@ import {
   tagControl,
   urlControl,
   userControl,
-  likeControl
+  likeControl,
+  matchControl
 } from "../controllers/index";
-import { createMatch } from '../lib/matchmaking';
+
+
 
 import {
   authenticate,
   verifySignedMessage,
   verifySignedFunctionMessage,
 } from "../middleware/auth";
+import { getGroup } from '../lib/grouping';
 
 const router = express.Router();
 
@@ -194,7 +197,7 @@ router.put(
 router.post(
   "/url",
   authenticate,
-  verifySignedFunctionMessage,
+  //verifySignedFunctionMessage,
   urlControl.createURL
 );
 
@@ -254,7 +257,7 @@ router.delete(
 router.post(
   "/tag",
   authenticate,
-  verifySignedFunctionMessage,
+  //verifySignedFunctionMessage,
   tagControl.createTag
 );
 
@@ -387,6 +390,12 @@ router.get("/tag", tagControl.getAllTags);
 // sync data to smart contract
 router.get("/sync", contractControl.syncDataToSmartContract);
 
-router.get("/match", createMatch);
+router.post("/creatematch", matchControl.createMatch);
+
+router.get("/getmatch/:id", matchControl.getMatch);
+
+//router.put("/updateurl", urlControl.updateUrlVerificationStatus);
+
+router.get("/getgroup", getGroup);
 
 export default router;

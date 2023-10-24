@@ -1,9 +1,9 @@
 // create matches from MatchGroup
-import { MatchGroup } from "../models/matchGroup"
+import { MatchGroup, MatchGroupDocument } from "../models/matchGroup"
 import { Match, MatchDocument } from "../models/match";
 import { User, Url } from "../models/schema";
 import mongoose from "mongoose";
-import { Request, Response } from 'express';
+
 /*
 1. Create a new Match
 2. Close the match
@@ -15,7 +15,52 @@ inside DB
 "2" : [user3, user4]
 
 */
-export const createMatch = async(req: Request, res: Response) => {
+
+export const generateMatch = async(group : MatchGroupDocument): Promise<MatchDocument | null > => {
+    let match = null;
+    if(group.users.length >= 2) {
+        for(let i = 0; i < group.users.length; i++) {
+            for (let j = i+ 1; j < group.users.length; j++) {
+                match = await Match.create(
+                    { user1 :{id: group.users[i]._id}, user2: {id: group.users[j]._id}, threshold: group.key },                            
+                )
+                // update users matched field
+                await User.updateMany({ _id: { $in: [group.users[i]._id, group.users[j]._id] } }, { matched: true });
+                // remove users from matchgroup
+                const res = await MatchGroup.updateMany({}, { $pull: { users: {$in: [group.users[i]._id, group.users[j]._id]} } });
+                console.log("result : ", res);
+            }
+        }
+    }
+    else {
+        console.log("less than 2 users in the group. Not enough to make a match");
+        // match user across other group where key is greater than current group key and users > 0
+        const otherGroup = await MatchGroup.findOne({ key: { $gt: group.key }, users: { $exists: true, $not: { $size: 0 } }});
+        if(otherGroup) {
+            match = await Match.create(
+                { user1 :{id: group.users[0]._id}, user2: {id: otherGroup.users[0]._id}, threshold: group.key },
+            )
+            // update users matched field
+            await User.updateMany({ _id: { $in: [group.users[0]._id, otherGroup.users[0]._id] } }, { matched: true });
+            // remove users from matchgroup
+            const res = await MatchGroup.updateMany({}, { $pull: { users: {$in: [group.users[0]._id, otherGroup.users[0]._id]} } });
+            console.log("result : ", res);
+        }
+        else {
+            console.log("no other group found");
+        }
+
+    }
+    if(match != null) {
+        // populate match
+        match = await populateMatch(match);
+    }
+    return match;
+
+}
+
+
+export const generateAllMatches = async() => {
     let matches = [];
     const MatchGroups = await MatchGroup.find();
     for (const groupKey in MatchGroups) {
@@ -63,7 +108,12 @@ export const createMatch = async(req: Request, res: Response) => {
         usersRemaining.splice(0, 2);
     }
     console.log("final matches : ", matches);
-    return res.status(201).json({ matches: matches });
+
+    // populate matches
+    for (let i = 0; i < matches.length; i++) {
+        matches[i] = await populateMatch(matches[i]);
+    }
+    return matches;
 
 }
 
@@ -72,20 +122,20 @@ export const populateMatch = async(matchObj : MatchDocument) : Promise<MatchDocu
     // get all the urls submitted by user1 where verified is false and limit is threshold
     matchObj.user1.urls = await Url.find({ submittedBy: matchObj.user1.id, verified: false  }).limit(matchObj.threshold);
     matchObj.user2.urls = await Url.find({ submittedBy: matchObj.user2.id, verified: false }).limit(matchObj.threshold);
+    matchObj.save();
     return matchObj;
 
 }
 
 
 // get match by matchID
-export const getMatchbyMatchID = async (matchID: string) => {
+export const getMatchbyMatchID = async (matchID: string): Promise<MatchDocument> => {
     let matchObj = await Match.findOne({ _id: matchID });
     if(!matchObj) {
         throw new Error("match with provided matchID not found");
     }
-    const match = await populateMatch(matchObj);
-    console.log({match});
-    return match;
+    console.log({matchObj});
+    return matchObj;
 }
 
 
