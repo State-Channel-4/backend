@@ -2,7 +2,7 @@
 import { MatchGroup, MatchGroupDocument } from "../models/matchGroup"
 import { Match, MatchDocument } from "../models/match";
 import { User, Url } from "../models/schema";
-import mongoose from "mongoose";
+import mongoose, { Mongoose } from "mongoose";
 
 /*
 1. Create a new Match
@@ -128,6 +128,24 @@ export const populateMatch = async(matchObj : MatchDocument) : Promise<MatchDocu
 }
 
 
+// get match by userID
+export const getMatchbyUserID = async(userID: mongoose.Types.ObjectId): Promise<MatchDocument | null> => {
+    try {
+        // Find a match where the user1 or user2 field contains the provided userID
+        const match = await Match.findOne({
+          $or: [
+            { 'user1.id': userID },
+            { 'user2.id': userID }
+          ]
+        });
+    
+        return match;
+      } catch (error) {
+        console.error('Error while retrieving the match:', error);
+        return null;
+      }
+}
+
 // get match by matchID
 export const getMatchbyMatchID = async (matchID: string): Promise<MatchDocument> => {
     let matchObj = await Match.findOne({ _id: matchID });
@@ -138,6 +156,39 @@ export const getMatchbyMatchID = async (matchID: string): Promise<MatchDocument>
     return matchObj;
 }
 
+
+
+export const updateMatchURLs = async(matchID: string, userId: string, urls: Array<string>) :Promise<MatchDocument | { error: string; }> => {
+    let result = null;
+    const match_id = new mongoose.Types.ObjectId(matchID);
+    result = await Match.updateMany(
+        {
+          _id: match_id,
+          $or: [
+            { 'user1.urls.url': { $in: urls } },
+            { 'user2.urls.url': { $in: urls } },
+          ],
+        },
+        {
+          $set: {
+            'user1.urls.$[elem1].verified': true,
+            'user2.urls.$[elem2].verified': true,
+          },
+        },
+        {
+          arrayFilters: [
+            { 'elem1.url': { $in: urls } },
+            { 'elem2.url': { $in: urls } },
+          ],
+        }
+      );
+    console.log("result : ", result);
+    const updatedMatch = await Match.findById({_id: match_id});
+    if(!updatedMatch) {
+        throw new Error("Invalid matchID. Match not found");
+    }
+    return updatedMatch;
+}
 
 export const updateMatchStatus = async(matchID: string, status: string) :Promise<MatchDocument | { error: string; }> => {
     if (status in ['ready', 'running', 'completed', 'deadlock'] === false) {

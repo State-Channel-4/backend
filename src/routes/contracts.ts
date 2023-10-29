@@ -394,6 +394,8 @@ router.post("/creatematch", matchControl.createMatch);
 
 router.get("/getmatch/:id", matchControl.getMatch);
 
+router.post("/updatematch", matchControl.updateMatch);
+
 //router.put("/updateurl", urlControl.updateUrlVerificationStatus);
 
 router.get("/getgroup", getGroup);

@@ -1,6 +1,7 @@
 import {Request, Response } from 'express';
-import {getMatchbyMatchID, generateMatch } from '../lib/matchmaking';
+import {getMatchbyMatchID, generateMatch, getMatchbyUserID, updateMatchURLs } from '../lib/matchmaking';
 import { getGroup } from '../lib/grouping';
+import mongoose from 'mongoose';
 export const createMatch = async (req: Request, res: Response) => {
     console.log("req.body : ", req.body);
     const userId = req.body.urlId;
@@ -13,6 +14,14 @@ export const createMatch = async (req: Request, res: Response) => {
     return res.status(200).json({match});
 }
 export const getMatch = async(req: Request, res: Response) => {
-    const match = await getMatchbyMatchID(req.params.id)
+    const userId = new mongoose.Types.ObjectId(req.params.id);
+    const match = await getMatchbyUserID(userId);
+    return res.status(200).json({match});
+}
+
+export const updateMatch = async(req: Request, res: Response) => {
+    console.log("Req body : ", req.body);
+    const {matchId, userId, verifiedURLs} = req.body;
+    const match = await updateMatchURLs(matchId, userId, verifiedURLs);
     return res.status(200).json({match});
 }
