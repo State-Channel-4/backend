@@ -6,6 +6,8 @@ import * as TagControl from './tags';
 import * as UserControl from './users';
 import { UserDocument, TagDocument } from '../models/schema';
 import { Data } from '../types/typechain/Channel4';
+import { getContractObject } from './contract';
+import { ethers } from 'ethers';
 
 
 const createURL = async (req: Request, res: Response) => {
@@ -27,7 +29,12 @@ const createURL = async (req: Request, res: Response) => {
     await TagControl.attachURL(tags, newUrl.id);
     await UserControl.attachURL(submittedBy, newUrl.id);
 
-    return res.status(201).json(newUrl);
+    const receipt = await createReceipt(newUrl.url);
+
+    return res.status(201).json({
+      newUrl,
+      receipt,
+    });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "Server error" });
@@ -129,6 +136,60 @@ const markSynced = async (urls: string[]) => {
     { url: { $in: urls } },
     { syncedToBlockchain: true }
   );
+};
+
+const getContentToSign = async (url: string): Promise<Data.ContentToLitigateStruct> => {
+  const content = await Url.findOne({ url }).populate({
+    path: "submittedBy",
+    model: "User",
+    select: "walletAddress",
+  }).populate({
+    path: "tags",
+    model: "Tag",
+    select: "name",
+  });
+  if (!content) throw new Error("Content to sign not found");
+  return {
+    title: content.title,
+    url: content.url,
+    submittedBy: (content.submittedBy as unknown as UserDocument).walletAddress,
+    likes: content.likes,
+    tagIds: (content.tags as unknown as TagDocument[]).map((tag) => {
+      return tag.name;
+    }),
+    timestamp: Math.floor(Date.now() / 1000),
+  };
+};
+
+const getUrlEIP712Metadata = async () => {
+  const contract = getContractObject();
+  const EIP712Domain = await contract.eip712Domain();
+  const domain = {
+    name: EIP712Domain.name,
+    version: EIP712Domain.version,
+    chainId: EIP712Domain.chainId,
+    verifyingContract: EIP712Domain.verifyingContract,
+  };
+  const types = {
+    ContentToLitigate: [
+      { name: 'title', type: 'string' },
+      { name: 'url', type: 'string' },
+      { name: 'submittedBy', type: 'address' },
+      { name: 'likes', type: 'uint256' },
+      { name: 'tagIds', type: 'string[]' },
+      { name: 'timestamp', type: 'uint256' },
+    ],
+  };
+  return { domain, types };
+};
+
+const createReceipt = async (newUrl: string): Promise<string> => {
+  const provider = new ethers.JsonRpcProvider(process.env.RPC_URL as string);
+  const wallet = new ethers.Wallet(process.env.PRIVATE_KEY as string, provider);
+  const content = await getContentToSign(newUrl);
+  const { domain, types } = await getUrlEIP712Metadata();
+  const EIPSignature = await wallet.signTypedData(domain, types, content);
+  return EIPSignature;
 };
 
 export {

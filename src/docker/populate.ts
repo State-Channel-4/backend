@@ -1,11 +1,11 @@
 import dotenv from 'dotenv';
 
-import ethers, { Wallet, JsonRpcProvider, Contract } from 'ethers';
+import { Wallet, JsonRpcProvider, Contract } from 'ethers';
 
 dotenv.config();
 
 // ABI for the smart contract
-import ABI from '../abi.json';
+import ABI from '../abi/channel4.json';
 
 // URL of the backend
 const API_URL = 'http://localhost:8000/api';

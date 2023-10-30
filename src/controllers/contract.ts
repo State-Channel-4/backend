@@ -10,7 +10,7 @@ import * as LikeControl from './likes';
 import ABI from '../abi/channel4.json';
 import { Channel4 } from '../types/typechain/Channel4';
 
-const __createContract = () => {
+const getContractObject = () => {
   const provider = new ethers.JsonRpcProvider(process.env.RPC_URL as string);
   const wallet = new ethers.Wallet(process.env.PRIVATE_KEY as string, provider);
   const contract = new ethers.Contract(
@@ -25,7 +25,7 @@ const syncDataToSmartContract = async (_req: Request, res: Response) => {
   // Connect to smart contract
   let contract: Channel4;
   try {
-    contract = __createContract();
+    contract = getContractObject();
   } catch (error: any) {
     return res.status(500).json({ error: `Failed contract connection: ${error.message}` });
   }
@@ -56,5 +56,6 @@ const syncDataToSmartContract = async (_req: Request, res: Response) => {
 };
 
 export {
+  getContractObject,
   syncDataToSmartContract,
 };
