@@ -2,13 +2,19 @@ import { Request, Response } from 'express';
 import { Types } from 'mongoose';
 import { Tag, TagDocument, URLDocument, UserDocument } from '../models/schema';
 import { Data } from '../types/typechain/Channel4';
+import { getContractObject } from './contract';
+import { ethers } from 'ethers';
 
 export const createTag = async (req: Request, res: Response) => {
   try {
     const name: string = req.body.params[0];
     const createdBy: string = req.body.userId;
-    const tag: TagDocument = await Tag.create({ name, createdBy });
-    res.status(201).json({ tag });
+    const tag = await Tag.create({ name, createdBy });
+    const receipt = await createReceipt(tag.name);
+    res.status(201).json({
+      tag,
+      receipt,
+    });
   } catch (error) {
     if (error instanceof Error) {
       console.log(error.message);
@@ -85,3 +91,44 @@ export const markSynced = async (tags: string[]) => {
     { syncedToBlockchain: true }
   );
 }
+
+export const getTagToSign = async (name: string): Promise<Data.TagToLitigateStruct> => {
+  const tag = await Tag.findOne({ name }).populate({
+    path: 'createdBy',
+    model: 'User',
+    select: 'walletAddress',
+  });
+  if (!tag) throw new Error('Tag to sign not found');
+  return {
+    name: tag.name,
+    createdBy: (tag.createdBy as unknown as UserDocument).walletAddress,
+    timestamp: Math.floor(Date.now() / 1000),
+  };
+};
+
+export const getTagEIP712Metadata = async () => {
+  const contract = getContractObject();
+  const EIP712Domain = await contract.eip712Domain();
+  const domain = {
+    name: EIP712Domain.name,
+    version: EIP712Domain.version,
+    chainId: EIP712Domain.chainId,
+    verifyingContract: EIP712Domain.verifyingContract,
+  };
+  const types = {
+    TagToSync: [
+      { name: 'name', type: 'string' },
+      { name: 'createdBy', type: 'address' },
+    ],
+  };
+  return { domain, types };
+};
+
+export const createReceipt = async (newTag: string): Promise<string> => {
+  const provider = new ethers.JsonRpcProvider(process.env.RPC_URL as string);
+  const wallet = new ethers.Wallet(process.env.PRIVATE_KEY as string, provider);
+  const tag = await getTagToSign(newTag);
+  const { domain, types } = await getTagEIP712Metadata();
+  const EIPSignature = await wallet.signTypedData(domain, types, tag);
+  return EIPSignature;
+};
