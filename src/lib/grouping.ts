@@ -1,4 +1,4 @@
-import { UserDocument } from "../models/schema"
+import { User, UserDocument } from "../models/schema"
 import { MatchGroupDocument, MatchGroup } from "../models/matchGroup"
 import mongoose from "mongoose";
 export const addToGroup = async (user: UserDocument, key: number): Promise<MatchGroupDocument> => {
@@ -18,9 +18,10 @@ export const addToGroup = async (user: UserDocument, key: number): Promise<Match
         newGroup = await group.save();
     } else if (group && userInGroup) {
         // user exist and needs update. Remove user and then add to new key group
-        newGroup = await MatchGroup.findOneAndUpdate({ key }, { $pull: { users: user._id } }, { new: true });
+        console.log("existing key , user in group : ", userInGroup.key);
+        newGroup = await MatchGroup.findOneAndUpdate({ key: userInGroup.key }, { $pull: { users: user._id } }, { new: true });
         console.log("removed from group : ", newGroup);
-        newGroup = await MatchGroup.findOneAndUpdate({ key }, { $push: { users: user._id } }, { new: true });
+        newGroup = await MatchGroup.findOneAndUpdate({ key : key }, { $push: { users: user._id } }, { new: true });
         console.log("added to group : ", newGroup);
     }
     if(!newGroup) {
@@ -40,4 +41,18 @@ export const getGroup = async(userId: string): Promise<MatchGroupDocument | null
     }
     console.log("group : ", group);
     return group;
+}
+
+export const groupUpdate = async(userId: string): Promise<MatchGroupDocument | null> => {
+    console.log("user id provided : ", userId);
+    const userIdObj = new mongoose.Types.ObjectId(userId);
+    // get user object
+    const user = await User.findById(userIdObj);
+    if(!user) {
+        throw new Error("User not found");
+    }
+    // increment the key since new url submission
+    console.log("url count : ", user.submittedUrls.length);
+    const key = user.submittedUrls.length
+    return await addToGroup(user, key);
 }

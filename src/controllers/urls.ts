@@ -6,6 +6,7 @@ import * as TagControl from './tags';
 import * as UserControl from './users';
 import {  UserDocument, TagDocument } from '../models/schema';
 import { UrlToSync } from '../types/contract';
+import { groupUpdate } from '../lib/grouping';
 
 
 const createURL = async (req: Request, res: Response) => {
@@ -25,6 +26,8 @@ const createURL = async (req: Request, res: Response) => {
 
     await TagControl.attachURL(tags, newUrl.id);
     await UserControl.attachURL(submittedBy, newUrl.id);
+    // add or update the user in group for matchmaking
+    groupUpdate(submittedBy);
 
     return res.status(201).json(newUrl);
   } catch (err) {

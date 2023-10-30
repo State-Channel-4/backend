@@ -10,7 +10,6 @@ export const createUser = async (req: Request, res: Response) => {
   try {
     const user = await User.create({ walletAddress: address });
     const token = generateToken(user);
-    const match = addToGroup(user, 1);
     res.status(201).json({
       user: user,
       token,

@@ -138,7 +138,7 @@ export const getMatchbyUserID = async(userID: mongoose.Types.ObjectId): Promise<
             { 'user2.id': userID }
           ]
         });
-    
+        //console.log(`user : ${userID} match is ${match} `);    
         return match;
       } catch (error) {
         console.error('Error while retrieving the match:', error);
@@ -158,7 +158,7 @@ export const getMatchbyMatchID = async (matchID: string): Promise<MatchDocument>
 
 
 
-export const updateMatchURLs = async(matchID: string, userId: string, urls: Array<string>) :Promise<MatchDocument | { error: string; }> => {
+export const updateMatchURLs = async(matchID: string, userId: string, urls: Array<string>) => {
     let result = null;
     const match_id = new mongoose.Types.ObjectId(matchID);
     result = await Match.updateMany(
@@ -183,20 +183,24 @@ export const updateMatchURLs = async(matchID: string, userId: string, urls: Arra
         }
       );
     console.log("result : ", result);
-    const updatedMatch = await Match.findById({_id: match_id});
-    if(!updatedMatch) {
-        throw new Error("Invalid matchID. Match not found");
-    }
-    return updatedMatch;
+    return result;
+    // const updatedMatch = await Match.findById({_id: match_id});
+    // if(!updatedMatch) {
+    //     throw new Error("Invalid matchID. Match not found");
+    // }
+    // return updatedMatch;
 }
 
 export const updateMatchStatus = async(matchID: string, status: string) :Promise<MatchDocument | { error: string; }> => {
-    if (status in ['ready', 'running', 'completed', 'deadlock'] === false) {
+    let statusCodes = ['ready', 'running', 'completed', 'deadlock'];
+    if (!statusCodes.includes(status)) {
         return {
             error: "Invalid status",
         }
     }
-    const match = await Match.findOne({ _id: matchID });
+    
+    const match = await Match.findById({ _id: matchID });
+    console.log("updatematchstatus : ", match);
 
     if(!match) {
         throw new Error("Match not found");
@@ -213,19 +217,21 @@ export const updateMatchStatus = async(matchID: string, status: string) :Promise
     }
 }
 
-export const updateUserCompleted = async(matchID: string, userID: mongoose.Types.ObjectId, updateUser = "user1"):Promise<MatchDocument | { error: string; }>  => {
-    const match = await Match.findOne({ _id: matchID });
+export const updateUserCompleted = async(userId: mongoose.Types.ObjectId, updateUser = "user1"):Promise<MatchDocument | { error: string; }>  => {
+    const match = await getMatchbyUserID(userId);
     if(!match) {
-        throw new Error("Invalid matchID. Match not found");
+        throw new Error("Invalid userId. Match not found");
     }
-    if (match.user1.id === userID) {
+    if (match.user1.id.equals(userId)) {
+        console.log("user1 completed");
         match.user1.completed = true;
     }
-    else if (match.user2.id === userID) {
+    else if (match.user2.id.equals(userId)) {
+        console.log("user2 completed");
         match.user2.completed = true;
     }
     else {
-        const user = await User.findById({_id: userID});
+        const user = await User.findById({_id: userId});
         if (user?.role === 'mod') {
             if(updateUser === 'user1') {
                 match.user1.completed = true;

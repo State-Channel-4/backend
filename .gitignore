@@ -135,3 +135,7 @@ docker/logs
 
 # ts to js code from ts
 dist/
+
+# dev wallet or any wallet
+wallet.json
+wallet-dev.json
