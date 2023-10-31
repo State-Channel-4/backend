@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { Types } from 'mongoose';
 import { Tag, TagDocument, URLDocument, UserDocument } from '../models/schema';
 import { Data } from '../types/typechain/Channel4';
-import { getContractObject } from './contract';
+import { getEIPDomain } from './contract';
 import { ethers } from 'ethers';
 
 export const createTag = async (req: Request, res: Response) => {
@@ -107,14 +107,7 @@ export const getTagToSign = async (name: string): Promise<Data.TagToLitigateStru
 };
 
 export const getTagEIP712Metadata = async () => {
-  const contract = getContractObject();
-  const EIP712Domain = await contract.eip712Domain();
-  const domain = {
-    name: EIP712Domain.name,
-    version: EIP712Domain.version,
-    chainId: EIP712Domain.chainId,
-    verifyingContract: EIP712Domain.verifyingContract,
-  };
+  const domain = await getEIPDomain();
   const types = {
     TagToSync: [
       { name: 'name', type: 'string' },

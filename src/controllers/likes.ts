@@ -1,7 +1,7 @@
 import { Like, User, Url, URLDocument, LikeDocument, UserDocument } from '../models/schema';
 import { Request, Response } from 'express';
 import { Data } from '../types/typechain/Channel4';
-import { getContractObject } from './contract';
+import { getEIPDomain } from './contract';
 import { ethers } from 'ethers';
 
 
@@ -175,14 +175,7 @@ export const getLikeToSign = async (topic: string, from: string): Promise<Data.L
 };
 
 export const getLikeEIP712Metadata = async () => {
-    const contract = getContractObject();
-    const EIP712Domain = await contract.eip712Domain();
-    const domain = {
-      name: EIP712Domain.name,
-      version: EIP712Domain.version,
-      chainId: EIP712Domain.chainId,
-      verifyingContract: EIP712Domain.verifyingContract,
-    };
+    const domain = await getEIPDomain();
     const types = {
         LikeToLitigate: [
           { name: 'submittedBy', type: 'address' },

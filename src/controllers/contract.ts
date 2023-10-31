@@ -54,7 +54,19 @@ const syncDataToSmartContract = async (_req: Request, res: Response) => {
   return res.status(200).json({});
 };
 
+const getEIPDomain = async () => {
+  const contract = getContractObject();
+  const EIP712Domain = await contract.eip712Domain();
+  return {
+    name: EIP712Domain.name,
+    version: EIP712Domain.version,
+    chainId: EIP712Domain.chainId,
+    verifyingContract: EIP712Domain.verifyingContract,
+  };
+};
+
 export {
   getContractObject,
   syncDataToSmartContract,
+  getEIPDomain,
 };
