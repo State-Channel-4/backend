@@ -4,6 +4,8 @@ import ABI from '../abi/channel4.json';
 import jwt from 'jsonwebtoken';
 //import { expressjwt as express_jwt } from 'express-jwt';
 import { expressjwt } from 'express-jwt';
+import dotenv from 'dotenv';
+dotenv.config();
 
 
 const jwt_secret = process.env.JWT_SECRET as string;
