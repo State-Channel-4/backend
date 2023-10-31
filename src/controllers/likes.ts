@@ -1,6 +1,8 @@
 import { Like, User, Url, URLDocument, LikeDocument, UserDocument } from '../models/schema';
 import { Request, Response } from 'express';
 import { Data } from '../types/typechain/Channel4';
+import { getContractObject } from './contract';
+import { ethers } from 'ethers';
 
 
 export const handleLike = async (req: Request, res: Response) => {
@@ -67,7 +69,12 @@ export const handleLike = async (req: Request, res: Response) => {
         content.likes += liked ? 1 : -1;
         await content.save();
 
-        return res.status(200).json({});
+        const receipt = await createReceipt(urlId, userId);
+
+        return res.status(200).json({
+            like,
+            receipt,
+        });
     } catch (err) {
         console.error(err);
         return res.status(500).json({
@@ -166,3 +173,33 @@ export const getLikeToSign = async (topic: string, from: string): Promise<Data.L
         timestamp: Math.floor(Date.now() / 1000),
     };
 };
+
+export const getLikeEIP712Metadata = async () => {
+    const contract = getContractObject();
+    const EIP712Domain = await contract.eip712Domain();
+    const domain = {
+      name: EIP712Domain.name,
+      version: EIP712Domain.version,
+      chainId: EIP712Domain.chainId,
+      verifyingContract: EIP712Domain.verifyingContract,
+    };
+    const types = {
+        LikeToLitigate: [
+          { name: 'submittedBy', type: 'address' },
+          { name: 'url', type: 'string' },
+          { name: 'liked', type: 'bool' },
+          { name: 'nonce', type: 'uint256' },
+          { name: 'timestamp', type: 'uint256' },
+        ],
+      };
+    return { domain, types };
+  };
+
+  export const createReceipt = async (topic: string, from: string): Promise<string> => {
+    const provider = new ethers.JsonRpcProvider(process.env.RPC_URL as string);
+    const wallet = new ethers.Wallet(process.env.PRIVATE_KEY as string, provider);
+    const like = await getLikeToSign(topic, from);
+    const { domain, types } = await getLikeEIP712Metadata();
+    const EIPSignature = await wallet.signTypedData(domain, types, like);
+    return EIPSignature;
+  };
