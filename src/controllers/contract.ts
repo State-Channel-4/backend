@@ -34,11 +34,10 @@ const syncDataToSmartContract = async (_req: Request, res: Response) => {
   const users = await UserControl.getUsersToSync();
   const tags = await TagControl.getTagsToSync();
   const urls  = await URLControl.getContentToSync();
-  const likes = await LikeControl.getLikesToSync();
 
   // Submit a batch of data to the smart contract to sync
   try {
-    let tx = await contract.syncState(users, tags, urls, likes);
+    let tx = await contract.syncState(users, tags, urls);
     await tx.wait();
   } catch (error: any) {
     console.error("error: ", error);
@@ -49,7 +48,7 @@ const syncDataToSmartContract = async (_req: Request, res: Response) => {
   await UserControl.markSynced(users.map(user => user.userAddress as string));
   await TagControl.markSynced(tags.map(tag => tag.name));
   await URLControl.markSynced(urls.map(url => url.url));
-  await LikeControl.markSynced();
+  await LikeControl.markSynced(users.map(user => user.userAddress as string));
 
   // Return success on syncing smart contract with backend state
   return res.status(200).json({});

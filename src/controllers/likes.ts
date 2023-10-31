@@ -1,7 +1,6 @@
 import { Like, User, Url, URLDocument, LikeDocument, UserDocument } from '../models/schema';
 import { Request, Response } from 'express';
-
-import { LikeToSync } from '../types/contract';
+import { Data } from '../types/typechain/Channel4';
 
 
 export const handleLike = async (req: Request, res: Response) => {
@@ -119,42 +118,51 @@ export const handleGetLikes = async (req: Request, res: Response) => {
 }
 
 /**
- * Get all current pending likes/ dislikes that would mutate the contract state
- * @returns - data for all non-synced pending likes/dislikes to commit
+ * Get all current pending likes/ dislikes from specific user that would mutate the contract state
+ * @returns - data for all non-synced pending likes/dislikes of a specific user to commit
  */
-export const getLikesToSync = async (): Promise<LikeToSync[]> => {
-    return await Like
-        .find({ syncedToBlockchain: 0 })
-        .populate({
-            path: 'from',
-            model: 'User',
-            select: 'walletAddress'
-        })
-        .populate({
-            path: 'topic',
-            model: 'Url',
-            select: 'url'
-        })
-        .then(likes => likes.map(like => {
-            const likeDoc = (like as unknown) as LikeDocument
-            const topic = (likeDoc.topic as unknown) as URLDocument
-            const UserDoc = (like.from as unknown) as UserDocument
-            return {
-                url: topic.url,
-                liked: like.liked,
-                nonce: like.nonce,
-                submittedBy: UserDoc.walletAddress,
-            }
-        }));
+export const getLikesFromUser = async (userId: string): Promise<Data.UrlNonceStruct[]> =>  {
+    const likes = await Like.find({ from: userId, syncedToBlockchain: 0 }).populate({
+        path: 'topic',
+        model: 'Url',
+        select: 'url'
+    });
+    return likes.map((like) => {
+        return {
+            url: (like.topic as unknown as URLDocument).url,
+            nonce: like.nonce,
+            liked: like.liked,
+        }
+    });
 }
 
 /**
  * Remove all pending actions that have been synced with the smart contract
- * @todo: use oids to allow for limits to batching in one tx
  */
-export const markSynced = async () => {
+export const markSynced = async (users: string[]) => {
     await Like.updateMany(
+        { from: { $in: users } },
         { syncedToBlockchain: 0 },
         { syncedToBlockchain: 1 }
     );
 }
+
+export const getLikeToSign = async (topic: string, from: string): Promise<Data.LikeToLitigateStruct> => {
+    const like = await Like.findOne({ topic, from }).populate({
+        path: 'from',
+        model: 'User',
+        select: 'walletAddress'
+    }).populate({
+        path: 'topic',
+        model: 'Url',
+        select: 'url'
+    });
+    if (!like) throw new Error("Like to sign not found");
+    return {
+        submittedBy: (like.from as unknown as UserDocument).walletAddress,
+        url: (like.topic as unknown as URLDocument).url,
+        liked: like.liked,
+        nonce: like.nonce,
+        timestamp: Math.floor(Date.now() / 1000),
+    };
+};
