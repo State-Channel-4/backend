@@ -1,5 +1,5 @@
 import express from "express";
-import { authenticate, verifySignedFunctionMessage } from "../middleware/auth";
+import { authenticate } from "../middleware/auth";
 import { likeControl } from "../controllers";
 
 const router = express.Router();
@@ -63,7 +63,6 @@ router.get("/likes/:userId", likeControl.handleGetLikes);
 router.put(
     "/like/:id",
     authenticate,
-    verifySignedFunctionMessage,
     likeControl.handleLike
   );
 

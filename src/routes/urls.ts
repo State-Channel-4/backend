@@ -1,6 +1,6 @@
 import express from "express";
 import { urlControl } from "../controllers/index";
-import { authenticate, verifySignedFunctionMessage, verifySignedMessage } from "../middleware/auth";
+import { authenticate } from "../middleware/auth";
 
 const router = express.Router();
 
@@ -40,7 +40,6 @@ const router = express.Router();
 router.post(
   "/url",
   authenticate,
-  verifySignedFunctionMessage,
   urlControl.createURL
 );
 
@@ -69,7 +68,6 @@ router.post(
 router.delete(
   "/url",
   authenticate,
-  verifySignedMessage,
   urlControl.deleteURL
 );
 
