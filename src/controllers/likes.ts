@@ -80,7 +80,7 @@ export const handleLike = async (req: Request, res: Response) => {
     }
 }
 
-export const handleGetLikes = async (req: Request, res: Response) => {
+export const getLikesOfUser = async (req: Request, res: Response) => {
     // unmarshall variables from http request
     const { params: { userId } } = req;
 
