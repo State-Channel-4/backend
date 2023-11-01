@@ -1,6 +1,7 @@
 import express from "express";
 import { urlControl } from "../controllers/index";
 import { authenticate } from "../middleware/auth";
+import { ExtendedRequest } from "../types/request";
 
 const router = express.Router();
 
@@ -40,7 +41,7 @@ const router = express.Router();
 router.post(
   "/url",
   authenticate,
-  urlControl.createURL
+  (req, res) => urlControl.createURL(req as ExtendedRequest, res)
 );
 
 /**

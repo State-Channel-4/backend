@@ -1,6 +1,7 @@
 import express from "express";
 import { authenticate } from "../middleware/auth";
 import { likeControl } from "../controllers";
+import { ExtendedRequest } from "../types/request";
 
 const router = express.Router();
 
@@ -63,7 +64,7 @@ router.get("/likes/:userId", likeControl.getLikesFromUser);
 router.put(
     "/like/:id",
     authenticate,
-    likeControl.handleLike
+    (req, res) => likeControl.handleLike(req as ExtendedRequest, res)
   );
 
 export default router;
