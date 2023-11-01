@@ -7,7 +7,7 @@ import { ethers } from 'ethers';
 
 export const createTag = async (req: Request, res: Response) => {
   try {
-    const name: string = req.body.params[0];
+    const name: string = req.body.name;
     const createdBy: string = req.body.userId;
     const tag = await Tag.create({ name, createdBy });
     const receipt = await createReceipt(tag.name);
