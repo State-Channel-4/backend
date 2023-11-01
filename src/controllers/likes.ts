@@ -3,13 +3,15 @@ import { Request, Response } from 'express';
 import { Data } from '../types/typechain/Channel4';
 import { getEIPDomain } from './contract';
 import { ethers } from 'ethers';
+import { ExtendedRequest } from '../types/request';
 
 
-export const handleLike = async (req: Request, res: Response) => {
+export const handleLike = async (req: ExtendedRequest, res: Response) => {
     let likeText, urlId;
     try {
         // unmarshall variables from http request
-        let { liked, userId } = req.body;
+        const userId = req.auth.id;
+        let { liked } = req.body;
         urlId = req.params.id;
         const likeText = liked ? 'like' : 'dislike';
 
@@ -66,7 +68,7 @@ export const handleLike = async (req: Request, res: Response) => {
         content.likes += liked ? 1 : -1;
         await content.save();
 
-        const receipt = await createReceipt(urlId, userId);
+        const receipt = await createReceipt(urlId, userId as unknown as string);
 
         return res.status(200).json({
             like,

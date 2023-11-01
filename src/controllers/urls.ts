@@ -8,11 +8,13 @@ import { UserDocument, TagDocument } from '../models/schema';
 import { Data } from '../types/typechain/Channel4';
 import { getEIPDomain } from './contract';
 import { ethers } from 'ethers';
+import { ExtendedRequest } from '../types/request';
 
 
-const createURL = async (req: Request, res: Response) => {
+const createURL = async (req: ExtendedRequest, res: Response) => {
   try {
-    const {userId, title, url, tags} = req.body;
+    const userId = req.auth.id;
+    const {title, url, tags} = req.body;
 
     if (!tags || tags.length === 0) {
       return res.status(400).json({ error: "Please add some tags to the URL" });

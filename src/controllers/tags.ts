@@ -4,11 +4,12 @@ import { Tag, TagDocument, URLDocument, UserDocument } from '../models/schema';
 import { Data } from '../types/typechain/Channel4';
 import { getEIPDomain } from './contract';
 import { ethers } from 'ethers';
+import { ExtendedRequest } from '../types/request';
 
-export const createTag = async (req: Request, res: Response) => {
+export const createTag = async (req: ExtendedRequest, res: Response) => {
   try {
+    const createdBy = req.auth.id;
     const name: string = req.body.name;
-    const createdBy: string = req.body.userId;
     const tag = await Tag.create({ name, createdBy });
     const receipt = await createReceipt(tag.name);
     res.status(201).json({
