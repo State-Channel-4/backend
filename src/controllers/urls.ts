@@ -12,8 +12,7 @@ import { ethers } from 'ethers';
 
 const createURL = async (req: Request, res: Response) => {
   try {
-    const [title, url, tags] = req.body.params;
-    const submittedBy = req.body.userId;
+    const {userId, title, url, tags} = req.body;
 
     if (!tags || tags.length === 0) {
       return res.status(400).json({ error: "Please add some tags to the URL" });
@@ -24,10 +23,10 @@ const createURL = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "URL already exists" });
     }
 
-    const newUrl = await Url.create({ title, url, submittedBy, tags });
+    const newUrl = await Url.create({ title, url, submittedBy: userId, tags });
 
     await TagControl.attachURL(tags, newUrl.id);
-    await UserControl.attachURL(submittedBy, newUrl.id);
+    await UserControl.attachURL(userId, newUrl.id);
 
     const receipt = await createReceipt(newUrl.url);
 
