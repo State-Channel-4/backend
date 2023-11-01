@@ -1,14 +1,15 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import { Url } from '../models/schema';
 import { shuffle } from '../lib/utils';
 import * as TagControl from './tags';
 import * as UserControl from './users';
-import { UserDocument, TagDocument } from '../models/schema';
 import { Data } from '../types/typechain/Channel4';
 import { getEIPDomain } from './contract';
 import { ethers } from 'ethers';
 import { ExtendedRequest } from '../types/request';
+import { UserDocument } from '../models/users';
+import { Url } from '../models/urls';
+import { TagDocument } from '../models/tags';
 
 
 const createURL = async (req: ExtendedRequest, res: Response) => {

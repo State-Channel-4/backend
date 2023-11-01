@@ -1,9 +1,11 @@
-import { Like, User, Url, URLDocument, LikeDocument, UserDocument } from '../models/schema';
 import { Request, Response } from 'express';
 import { Data } from '../types/typechain/Channel4';
 import { getEIPDomain } from './contract';
 import { ethers } from 'ethers';
 import { ExtendedRequest } from '../types/request';
+import { User, UserDocument } from '../models/users';
+import { URLDocument, Url } from '../models/urls';
+import { Like, LikeDocument } from '../models/likes';
 
 
 export const handleLike = async (req: ExtendedRequest, res: Response) => {

@@ -1,7 +1,7 @@
-const { ethers } = require("ethers");
-const { User } = require("../models/schema");
-const { generateToken } = require("../middleware/auth");
 import { Request, Response } from 'express';
+import { User } from '../models/users';
+import { ethers } from 'ethers';
+import { generateToken } from '../middleware/auth';
 
 
 export const login = async (req: Request, res: Response) => {
@@ -9,7 +9,7 @@ export const login = async (req: Request, res: Response) => {
     const { signedMessage } = req.body;
 
     const message = process.env.LOGIN_SECRET;
-    const signer = ethers.verifyMessage(message, signedMessage);
+    const signer = ethers.verifyMessage(message as string, signedMessage);
     // Find user or insert if they do not already exist
     const user = await User.findOneAndUpdate(
       { walletAddress: signer },

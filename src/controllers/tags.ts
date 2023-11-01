@@ -1,10 +1,12 @@
 import { Request, Response } from 'express';
 import { Types } from 'mongoose';
-import { Tag, TagDocument, URLDocument, UserDocument } from '../models/schema';
 import { Data } from '../types/typechain/Channel4';
 import { getEIPDomain } from './contract';
 import { ethers } from 'ethers';
 import { ExtendedRequest } from '../types/request';
+import { UserDocument } from '../models/users';
+import { Tag, TagDocument } from '../models/tags';
+import { URLDocument } from '../models/urls';
 
 export const createTag = async (req: ExtendedRequest, res: Response) => {
   try {
