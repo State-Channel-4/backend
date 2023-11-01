@@ -6,14 +6,11 @@ import { ethers } from 'ethers';
 
 
 export const handleLike = async (req: Request, res: Response) => {
-    let url, liked, likeText;
+    let likeText, urlId;
     try {
         // unmarshall variables from http request
-        const {
-            params: { id: urlId },
-            body: { params, userId },
-        } = req;
-        [url, liked] = params;
+        let { liked, userId } = req.body;
+        urlId = req.params.id;
         const likeText = liked ? 'like' : 'dislike';
 
         // check user exists
@@ -28,7 +25,7 @@ export const handleLike = async (req: Request, res: Response) => {
         let content = await Url.findById(urlId);
         if (!content) {
             return res.status(404).json({
-                error: `Content ${url} doesn't exist as Channel 4 content`,
+                error: `Content ${urlId} doesn't exist as Channel 4 content`,
             });
         }
 
@@ -38,7 +35,7 @@ export const handleLike = async (req: Request, res: Response) => {
             // check that user is not trying to dislike content they have never liked
             if (liked == false) {
                 return res.status(400).json({
-                    error: `User '${userId}' cannot dislike content '${url}' they've never liked`,
+                    error: `User '${userId}' cannot dislike content '${urlId}' they've never liked`,
                 });
             }
             // if no existing like create and add to user's likes
@@ -49,7 +46,7 @@ export const handleLike = async (req: Request, res: Response) => {
             // check if like state is incorrect
             if (like.liked == liked) {
                 return res.status(400).json({
-                    error: `User '${userId}' has already ${likeText} '${url}'`,
+                    error: `User '${userId}' has already ${likeText} '${urlId}'`,
                 });
             }
             if (like.syncedToBlockchain == 0) {
@@ -78,10 +75,9 @@ export const handleLike = async (req: Request, res: Response) => {
     } catch (err) {
         console.error(err);
         return res.status(500).json({
-            error: `Failed to ${likeText} '${url}'`,
+            error: `Failed to ${likeText} '${urlId}'`,
         });
     }
-
 }
 
 export const handleGetLikes = async (req: Request, res: Response) => {
