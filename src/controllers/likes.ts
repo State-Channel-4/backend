@@ -6,12 +6,12 @@ import { ethers } from 'ethers';
 
 
 export const handleLike = async (req: Request, res: Response) => {
-    let url, liked, likeText, address;
+    let url, liked, likeText;
     try {
         // unmarshall variables from http request
         const {
             params: { id: urlId },
-            body: { address, params, userId },
+            body: { params, userId },
         } = req;
         [url, liked] = params;
         const likeText = liked ? 'like' : 'dislike';
@@ -20,7 +20,7 @@ export const handleLike = async (req: Request, res: Response) => {
         let user = await User.findById(userId);
         if (!user) {
             return res.status(404).json({
-                error: `'${address}' doesn't exist as a Channel 4 user`,
+                error: `'${userId}' doesn't exist as a Channel 4 user`,
             });
         }
 
@@ -38,7 +38,7 @@ export const handleLike = async (req: Request, res: Response) => {
             // check that user is not trying to dislike content they have never liked
             if (liked == false) {
                 return res.status(400).json({
-                    error: `User '${address}' cannot dislike content '${url}' they've never liked`,
+                    error: `User '${userId}' cannot dislike content '${url}' they've never liked`,
                 });
             }
             // if no existing like create and add to user's likes
@@ -49,7 +49,7 @@ export const handleLike = async (req: Request, res: Response) => {
             // check if like state is incorrect
             if (like.liked == liked) {
                 return res.status(400).json({
-                    error: `User '${address}' has already ${likeText} '${url}'`,
+                    error: `User '${userId}' has already ${likeText} '${url}'`,
                 });
             }
             if (like.syncedToBlockchain == 0) {
@@ -78,7 +78,7 @@ export const handleLike = async (req: Request, res: Response) => {
     } catch (err) {
         console.error(err);
         return res.status(500).json({
-            error: `Failed to ${likeText} '${url}' as '${address}`,
+            error: `Failed to ${likeText} '${url}'`,
         });
     }
 
