@@ -265,3 +265,35 @@ export const markMatchCompleted = async(matchID: string) => {
     return match;    
 
 }
+
+export const updateconcurStatus = async(matchId: string, userId: string, concurStatus: string) => {
+    let match = await Match.findById({_id: matchId});
+    if(!match) {
+        throw new Error("Match not found with provided matchID");
+    }
+    if(match.user1.id.equals(userId)) {
+        match.user1.concur = concurStatus;
+    }
+    else if (match.user2.id.equals(userId)) {
+        match.user2.concur = concurStatus;
+    }
+    return await match.save();
+}
+
+export const closeMatch = async(matchId: string) => {
+    let match = await Match.findById({_id: matchId});
+    if(!match) {
+        throw new Error("Match not found with provided matchID");
+    }
+    if(match.user1.concur === 'yes' && match.user2.concur === 'yes') {
+        match.status = 'completed';
+        await User.updateMany({ _id: { $in: [match.user1.id, match.user2.id] } }, { matched: false });
+        match = await match.save()
+    }
+    return match;
+}
+
+export const getDeadlockMatches = async() => {
+    // return all matches where match status is deadlock
+    return await Match.find({status: 'deadlock'});
+}

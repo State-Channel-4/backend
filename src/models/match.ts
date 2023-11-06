@@ -6,14 +6,16 @@ interface MatchDocument extends Document {
         id: mongoose.Types.ObjectId,
         urls: Array<URLDocument>,
         completed: boolean,
+        concur : string, // does user agree with the final result? values yes, no . None by default. If yes and no then deadlock
     },
     user2: {
         id: mongoose.Types.ObjectId,
         urls: Array<URLDocument>,
         completed: boolean,
+        concur : string,
     },
     status: string;
-    threshold: number; // threshold is max limit of urls allowed to be validated, depnds on key in MatchGroup
+    threshold: number; // threshold is max limit of urls allowed to be validated, depnds on key in MatchGroup(not needed , will remove)
     createdAt: Date;
     updatedAt: Date;
 }
@@ -31,8 +33,12 @@ const MatchSchema = new mongoose.Schema<MatchDocument>({
         completed: {
             type: Boolean,
             default: false,
+        },
+        concur: {
+            type: String,
+            enum: ['yes', 'no', 'none'],
+            default: 'none',
         }
-        
     },
     user2: {
         id: {
@@ -45,6 +51,11 @@ const MatchSchema = new mongoose.Schema<MatchDocument>({
         completed: {
             type: Boolean,
             default: false,
+        },
+        concur: {
+            type: String,
+            enum: ['yes', 'no', 'none'],
+            default: 'none',
         }
     },
     status: {
