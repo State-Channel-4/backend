@@ -139,3 +139,6 @@ dist/
 # dev wallet or any wallet
 wallet.json
 wallet-dev.json
+
+# typechain files
+src/types/typechain/

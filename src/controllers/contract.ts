@@ -6,8 +6,9 @@ import * as UserControl from './users';
 import * as LikeControl from './likes';
 
 
-// Models
-import ABI from '../abi.json';
+// Contract
+import ABI from '../abi/channel4.json';
+import { Channel4 } from '../types/typechain/Channel4';
 
 const __createContract = () => {
   const provider = new ethers.JsonRpcProvider(process.env.RPC_URL as string);
@@ -17,12 +18,12 @@ const __createContract = () => {
     ABI,
     wallet
   );
-  return contract;
+  return contract as unknown as Channel4;
 };
 
 const syncDataToSmartContract = async (_req: Request, res: Response) => {
   // Connect to smart contract
-  let contract: ethers.Contract;
+  let contract: Channel4;
   try {
     contract = __createContract();
   } catch (error: any) {
@@ -45,9 +46,9 @@ const syncDataToSmartContract = async (_req: Request, res: Response) => {
   }
 
   // Mark all as synced
-  await UserControl.markSynced(users);
-  await TagControl.markSynced(tags);
-  await URLControl.markSynced(urls);
+  await UserControl.markSynced(users.map(user => user.userAddress as string));
+  await TagControl.markSynced(tags.map(tag => tag.name));
+  await URLControl.markSynced(urls.map(url => url.url));
   await LikeControl.markSynced();
 
   // Return success on syncing smart contract with backend state

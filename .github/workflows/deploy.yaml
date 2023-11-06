@@ -34,6 +34,7 @@ jobs:
       - name: NPM install, build and test
         run: |
           npm install
+          npm run typechain:create
           npm test
         env:
           NODE_ENV: test

@@ -4,9 +4,9 @@ import { Url } from '../models/schema';
 import { shuffle } from '../lib/utils';
 import * as TagControl from './tags';
 import * as UserControl from './users';
-import {  UserDocument, TagDocument } from '../models/schema';
-import { UrlToSync } from '../types/contract';
 import { groupUpdate } from '../lib/grouping';
+import { UserDocument, TagDocument } from '../models/schema';
+import { Data } from '../types/typechain/Channel4';
 
 
 const createURL = async (req: Request, res: Response) => {
@@ -121,35 +121,32 @@ const getMixedURLs = async (req: Request, res: Response) => {
   }
 };
 
-const getContentToSync = async (): Promise<UrlToSync[]> => {
-  return await Url.find({ syncedToBlockchain: false })
-    .populate({
-      path: 'submittedBy',
-      model: 'User',
-      select: 'walletAddress'
-    })
-    .populate({
-      path: 'tags',
-      model: 'Tag',
-      select: 'name'
-    })
-    .then(urls => urls.map(url => {
-      const userDoc = (url.submittedBy as unknown) as UserDocument
-      return {
-        title: url.title,
-        url: url.url,
-        submittedBy: userDoc.walletAddress,
-        tagIds: url.tags.map(tag => {
-          const tagDoc = (tag as unknown) as TagDocument
-          return tagDoc.name
-        })
-      }
-    }));
+const getContentToSync = async (): Promise<Data.ContentToSyncStruct[]> => {
+  const contents = await Url.find({ syncedToBlockchain: false }).populate({
+    path: "submittedBy",
+    model: "User",
+    select: "walletAddress",
+  }).populate({
+    path: "tags",
+    model: "Tag",
+    select: "name",
+  });
+  return contents.map((content) => {
+    return {
+      title: content.title,
+      url: content.url,
+      submittedBy: (content.submittedBy as unknown as UserDocument).walletAddress,
+      likes: content.likes,
+      tagIds: content.tags.map((tag) => {
+        return (tag as unknown as TagDocument).name;
+      }),
+    };
+  });
 };
 
-const markSynced = async (urls: UrlToSync[]) => {
+const markSynced = async (urls: string[]) => {
   await Url.updateMany(
-    { title: { $in: urls } },
+    { url: { $in: urls } },
     { syncedToBlockchain: true }
   );
 };
