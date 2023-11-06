@@ -4,15 +4,15 @@ import { Url } from '../models/schema';
 import { shuffle } from '../lib/utils';
 import * as TagControl from './tags';
 import * as UserControl from './users';
+import { groupUpdate } from '../lib/grouping';
 import { UserDocument, TagDocument } from '../models/schema';
 import { Data } from '../types/typechain/Channel4';
 
 
 const createURL = async (req: Request, res: Response) => {
   try {
-    const [title, url, tags] = req.body.params;
+      const [title, url, tags] = req.body.params;
     const submittedBy = req.body.userId;
-
     if (!tags || tags.length === 0) {
       return res.status(400).json({ error: "Please add some tags to the URL" });
     }
@@ -26,6 +26,8 @@ const createURL = async (req: Request, res: Response) => {
 
     await TagControl.attachURL(tags, newUrl.id);
     await UserControl.attachURL(submittedBy, newUrl.id);
+    // add or update the user in group for matchmaking
+    groupUpdate(submittedBy);
 
     return res.status(201).json(newUrl);
   } catch (err) {
@@ -33,6 +35,24 @@ const createURL = async (req: Request, res: Response) => {
     return res.status(500).json({ error: "Server error" });
   }
 };
+
+export const  updateUrlVerificationStatus = async (req: Request, res: Response) => {
+  try {
+    console.log("body params : ", req.body);
+    const { urlId, status } = req.body;
+    // get array of urlID and update all with verified to true
+    const urls = await Url.updateMany({ _id: { $in: urlId } }, { verified: status });
+    console.log("urls : ", urls);    
+    if(!urls) {
+      return res.status(400).json({ error: "URL not found" });
+    }
+    return res.status(200).json({ message: "URL verification status updated successfully" });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Server error" });
+  }
+
+}
 
 const deleteURL = async (req: Request, res: Response) => {
   try {

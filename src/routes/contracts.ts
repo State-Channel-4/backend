@@ -5,14 +5,18 @@ import {
   tagControl,
   urlControl,
   userControl,
-  likeControl
+  likeControl,
+  matchControl
 } from "../controllers/index";
+
+
 
 import {
   authenticate,
   verifySignedMessage,
   verifySignedFunctionMessage,
 } from "../middleware/auth";
+import { getGroup } from '../lib/grouping';
 
 const router = express.Router();
 
@@ -193,7 +197,7 @@ router.put(
 router.post(
   "/url",
   authenticate,
-  verifySignedFunctionMessage,
+  //verifySignedFunctionMessage,
   urlControl.createURL
 );
 
@@ -253,7 +257,7 @@ router.delete(
 router.post(
   "/tag",
   authenticate,
-  verifySignedFunctionMessage,
+  //verifySignedFunctionMessage,
   tagControl.createTag
 );
 
@@ -385,5 +389,214 @@ router.get("/tag", tagControl.getAllTags);
  */
 // sync data to smart contract
 router.get("/sync", contractControl.syncDataToSmartContract);
+
+
+
+/**
+ * @swagger
+ * /api/creatematch:
+ *   post:
+ *     summary: Create a new match
+ *     tags: [Matches]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               date:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: The match was created successfully
+ *       400:
+ *         description: Error in creating match
+ */
+router.post("/creatematch", matchControl.createMatch);
+
+
+/**
+ * @swagger
+ * /api/getmatch/{id}:
+ *   get:
+ *     summary: Get a match by ID
+ *     tags: [Matches]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ID of the match
+ *     responses:
+ *       200:
+ *         description: The match was found successfully
+ *       404:
+ *         description: Match not found
+ */
+router.get("/getmatch/:id", matchControl.getMatch);
+
+
+/**
+ * @swagger
+ * /api/updatematch:
+ *   post:
+ *     summary: Update a match
+ *     tags: [Matches]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               matchId:
+ *                 type: string
+ *               status:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: The match was updated successfully
+ *       400:
+ *         description: Error in updating match
+ */
+router.post("/updatematch", matchControl.updateMatch);
+
+/**
+ * @swagger
+ * /api/markcompletion:
+ *   post:
+ *     summary: Mark a match as completed
+ *     tags: [Matches]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               matchId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: The match was marked as completed successfully
+ *       400:
+ *         description: Error in marking match as completed
+ */
+router.post("/markcompletion", matchControl.markCompletion);
+
+
+/**
+ * @swagger
+ * /api/updatematch:
+ *   post:
+ *     summary: Update a match
+ *     tags: [Matches]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               matchId:
+ *                 type: string
+ *               status:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: The match was updated successfully
+ *       400:
+ *         description: Error in updating match
+ */
+router.post("/updatematch", matchControl.updateMatch);
+
+
+/**
+ * @swagger
+ * /api/markcompletion:
+ *   post:
+ *     summary: Mark a match as completed
+ *     tags: [Matches]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               matchId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: The match was marked as completed successfully
+ *       400:
+ *         description: Error in marking match as completed
+ */
+router.post("/markcompletion", matchControl.markCompletion);
+
+
+/**
+ * @swagger
+ * /api/getgroup:
+ *   get:
+ *     summary: Get group information
+ *     tags: [Matches]
+ *     responses:
+ *       200:
+ *         description: Group information retrieved successfully
+ *       500:
+ *         description: Server error
+ */
+router.get("/getgroup", getGroup);
+
+
+// concur match
+/**
+ * @swagger
+ * /api/concurmatch:
+ *   post:
+ *     summary: Update the concur status of a match
+ *     tags: [Matches]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               matchId:
+ *                 type: string
+ *               userId:
+ *                 type: string
+ *               concurStatus:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: The concur status of the match was updated successfully
+ *       400:
+ *         description: Error in updating the concur status of the match
+ */
+router.post("/concurmatch", matchControl.updateConcurStatus);
+
+// get getDeadlockMatch
+/**
+ * @swagger
+ * /api/deadlockedmatches:
+ *   get:
+ *     summary: Get all matches that are deadlocked
+ *     tags: [Matches]
+ *     responses:
+ *       200:
+ *         description: The match was found successfully
+ *       404:
+ *         description: Match not found
+ * 
+ */
+router.get("/deadlockedmatches", matchControl.getDeadlockMatch);
+
 
 export default router;

@@ -28,3 +28,8 @@ export interface UrlToSync {
     likes: number,
     tagIds: string[],
 }
+
+export interface MatchGroupType {
+    key: number,
+    users: string[],
+}

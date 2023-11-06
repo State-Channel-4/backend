@@ -43,13 +43,16 @@ export const verifySignedFunctionMessage = async (req: Request, res: Response, n
     TODO: this will be better implemented with SIWE and the WalletConnect integration
     try {
         const { signedMessage, address, functionName, params } = req.body;
+        console.log("req.body : ", req.body);
         // signed transaction string to object
+        next();
+        /*
         const tx = ethers.Transaction.from(signedMessage);
         // Recreate the meta transaction
         const channel4Contract = new ethers.Contract(process.env.CONTRACT_ADDRESS as string, ABI);
         const metaTransaction = await channel4Contract[
             functionName as string
-        ].populateTransaction(...params);
+        ].populateTransaction(...params, address);
         // Compare server-side tx with client-side tx
         if (metaTransaction.data !== tx.data) {
             return res

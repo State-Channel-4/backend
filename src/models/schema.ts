@@ -8,6 +8,8 @@ interface UserDocument extends Document {
   createdAt: Date;
   updatedAt: Date;
   syncedToBlockchain: boolean;
+  role: string;
+  matched: boolean,
 }
 
 interface URLDocument extends Document {
@@ -15,6 +17,7 @@ interface URLDocument extends Document {
   url: string;
   submittedBy: mongoose.Types.ObjectId;
   likes: number;
+  verified: boolean;
   tags: Array<mongoose.Types.ObjectId>;
   createdAt: Date;
   updatedAt: Date;
@@ -63,6 +66,15 @@ const UserSchema = new mongoose.Schema<UserDocument>({
     type: Boolean,
     default: false,
   },
+  role: {
+    type: String,
+    enum: ['moderator', 'normal'],
+    default : 'normal'
+  },
+  matched: {
+    type: Boolean,
+    default: false,
+  }
 });
 
 const URLSchema = new mongoose.Schema<URLDocument>({
@@ -83,6 +95,10 @@ const URLSchema = new mongoose.Schema<URLDocument>({
   likes: {
     type: Number,
     default: 0,
+  },
+  verified: {
+    type: Boolean,
+    default: false,
   },
   tags: [{
     type: mongoose.Schema.Types.ObjectId,

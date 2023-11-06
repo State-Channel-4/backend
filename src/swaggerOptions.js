@@ -1,3 +1,5 @@
+const path = require('path');
+
 const options = {
     definition: {
         openapi: "3.0.0",
@@ -12,7 +14,7 @@ const options = {
             },
         ],
     },
-    apis: ["./routes/*.js"], // files containing annotations as above
+    apis: [path.resolve(__dirname, '../src/routes/*.ts')],
 };
 
 module.exports = options;
