@@ -1,14 +1,20 @@
 import { Request, Response } from 'express';
 import { Types } from 'mongoose';
-import { Tag, TagDocument, UserDocument } from '../models/schema';
-import { TagToSync } from '../types/contract';
+import { Tag, TagDocument, URLDocument, UserDocument } from '../models/schema';
+import { Data } from '../types/typechain/Channel4';
+import { getEIPDomain } from './contract';
+import { ethers } from 'ethers';
 
 export const createTag = async (req: Request, res: Response) => {
   try {
     const name: string = req.body.params[0];
     const createdBy: string = req.body.userId;
-    const tag: TagDocument = await Tag.create({ name, createdBy });
-    res.status(201).json({ tag });
+    const tag = await Tag.create({ name, createdBy });
+    const receipt = await createReceipt(tag.name);
+    res.status(201).json({
+      tag,
+      receipt,
+    });
   } catch (error) {
     if (error instanceof Error) {
       console.log(error.message);
@@ -40,6 +46,7 @@ export const attachURL = async (tags: Types.ObjectId[], urlId: Types.ObjectId) =
     const tag: TagDocument | null = await Tag.findById(tagId);
     if (tag) {
       tag.urls.push(urlId);
+      tag.syncedToBlockchain = false;
       await tag.save();
     }
   }
@@ -52,31 +59,69 @@ export const detachURL = async (tags: Types.ObjectId[], urlId: Types.ObjectId) =
       const index = tag.urls.indexOf(urlId);
       if (index > -1) {
         tag.urls.splice(index, 1);
+        tag.syncedToBlockchain = false;
         await tag.save();
       }
     }
   }
 };
 
-export const getTagsToSync = async () : Promise<TagToSync[]> => {
-  return Tag.find({ syncedToBlockchain: false })
-    .populate({
-      path: 'createdBy',
-      model: 'User',
-      select: 'walletAddress'
-    })
-    .then(tags => tags.map(tag => {
-      const createdBy = (tag.createdBy as unknown) as UserDocument
-      return {
-        name: tag.name,
-        createdBy: createdBy.walletAddress,
-      }
-    }));
+export const getTagsToSync = async () : Promise<Data.TagToSyncStruct[]> => {
+  const tags = await Tag.find({ syncedToBlockchain: false }).populate({
+    path: 'createdBy',
+    model: 'User',
+    select: 'walletAddress',
+  }).populate({
+    path: 'urls',
+    model: 'Url',
+    select: 'title',
+  });
+  return tags.map(tag => {
+    return {
+      name: tag.name,
+      createdBy: (tag.createdBy as unknown as UserDocument).walletAddress,
+      contentIds: (tag.urls as unknown as URLDocument[]).map(url => url.title),
+    };
+  });
 }
 
-export const markSynced = async (tags: TagToSync[]) => {
+export const markSynced = async (tags: string[]) => {
   await Tag.updateMany(
     { name: { $in: tags } },
     { syncedToBlockchain: true }
   );
 }
+
+export const getTagToSign = async (name: string): Promise<Data.TagToLitigateStruct> => {
+  const tag = await Tag.findOne({ name }).populate({
+    path: 'createdBy',
+    model: 'User',
+    select: 'walletAddress',
+  });
+  if (!tag) throw new Error('Tag to sign not found');
+  return {
+    name: tag.name,
+    createdBy: (tag.createdBy as unknown as UserDocument).walletAddress,
+    timestamp: Math.floor(Date.now() / 1000),
+  };
+};
+
+export const getTagEIP712Metadata = async () => {
+  const domain = await getEIPDomain();
+  const types = {
+    TagToSync: [
+      { name: 'name', type: 'string' },
+      { name: 'createdBy', type: 'address' },
+    ],
+  };
+  return { domain, types };
+};
+
+export const createReceipt = async (newTag: string): Promise<string> => {
+  const provider = new ethers.JsonRpcProvider(process.env.RPC_URL as string);
+  const wallet = new ethers.Wallet(process.env.PRIVATE_KEY as string, provider);
+  const tag = await getTagToSign(newTag);
+  const { domain, types } = await getTagEIP712Metadata();
+  const EIPSignature = await wallet.signTypedData(domain, types, tag);
+  return EIPSignature;
+};

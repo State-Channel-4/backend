@@ -10,7 +10,7 @@ import * as LikeControl from './likes';
 import ABI from '../abi/channel4.json';
 import { Channel4 } from '../types/typechain/Channel4';
 
-const __createContract = () => {
+const getContractObject = () => {
   const provider = new ethers.JsonRpcProvider(process.env.RPC_URL as string);
   const wallet = new ethers.Wallet(process.env.PRIVATE_KEY as string, provider);
   const contract = new ethers.Contract(
@@ -25,7 +25,7 @@ const syncDataToSmartContract = async (_req: Request, res: Response) => {
   // Connect to smart contract
   let contract: Channel4;
   try {
-    contract = __createContract();
+    contract = getContractObject();
   } catch (error: any) {
     return res.status(500).json({ error: `Failed contract connection: ${error.message}` });
   }
@@ -34,29 +34,39 @@ const syncDataToSmartContract = async (_req: Request, res: Response) => {
   const users = await UserControl.getUsersToSync();
   const tags = await TagControl.getTagsToSync();
   const urls  = await URLControl.getContentToSync();
-  const likes = await LikeControl.getLikesToSync();
 
   // Submit a batch of data to the smart contract to sync
   try {
-    /* TODO: uncomment this
-    let tx = await contract.syncState(users, tags, urls, likes);
+    let tx = await contract.syncState(users, tags, urls);
     await tx.wait();
-    */
   } catch (error: any) {
     console.error("error: ", error);
     return res.status(500).json({ error: `Failed to sync state: ${error.message}` });
   }
 
   // Mark all as synced
-  await UserControl.markSynced(users);
-  await TagControl.markSynced(tags);
-  await URLControl.markSynced(urls);
-  await LikeControl.markSynced();
+  await UserControl.markSynced(users.map(user => user.userAddress as string));
+  await TagControl.markSynced(tags.map(tag => tag.name));
+  await URLControl.markSynced(urls.map(url => url.url));
+  await LikeControl.markSynced(users.map(user => user.userAddress as string));
 
   // Return success on syncing smart contract with backend state
   return res.status(200).json({});
 };
 
+const getEIPDomain = async () => {
+  const contract = getContractObject();
+  const EIP712Domain = await contract.eip712Domain();
+  return {
+    name: EIP712Domain.name,
+    version: EIP712Domain.version,
+    chainId: EIP712Domain.chainId,
+    verifyingContract: EIP712Domain.verifyingContract,
+  };
+};
+
 export {
+  getContractObject,
   syncDataToSmartContract,
+  getEIPDomain,
 };
