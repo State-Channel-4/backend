@@ -27,7 +27,7 @@ const router = express.Router();
  */
 // get the likes of a user
 // @todo: add pagination
-router.get("/likes/:userId", likeControl.getLikesFromUser);
+router.get("/likes/:userId", likeControl.getLikesOfUser);
 
 /**
  * @swagger
