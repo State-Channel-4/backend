@@ -1,8 +1,10 @@
 import faker from 'faker';
 import ethers from 'ethers';
 import mongoose from 'mongoose';
-import { User, Tag, Url } from '../models/schema';
 import dotenv from 'dotenv';
+import { User } from '../models/users';
+import { Tag } from '../models/tags';
+import { Url } from '../models/urls';
 
 dotenv.config();
 

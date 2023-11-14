@@ -1,10 +1,10 @@
-const { generateToken } = require("../middleware/auth");
-const { User } = require("../models/schema");
 import { Request, Response } from 'express';
 import { Types } from 'mongoose';
-import { UserDocument, URLDocument } from '../models/schema';
 import { Data } from '../types/typechain/Channel4';
 import { getLikesFromUser } from './likes';
+import { User, UserDocument } from '../models/users';
+import { generateToken } from '../middleware/auth';
+import { URLDocument } from '../models/urls';
 
 
 export const createUser = async (req: Request, res: Response) => {

@@ -1,4 +1,4 @@
-# channel-4-backend-poc2
+# channel-4-backend
 Backend code to synchronize users actions in the app to the state of the smart contract.
 
 ## To start

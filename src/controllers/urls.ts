@@ -1,19 +1,21 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import { Url } from '../models/schema';
 import { shuffle } from '../lib/utils';
 import * as TagControl from './tags';
 import * as UserControl from './users';
-import { UserDocument, TagDocument } from '../models/schema';
 import { Data } from '../types/typechain/Channel4';
 import { getEIPDomain } from './contract';
 import { ethers } from 'ethers';
+import { ExtendedRequest } from '../types/request';
+import { UserDocument } from '../models/users';
+import { Url } from '../models/urls';
+import { TagDocument } from '../models/tags';
 
 
-const createURL = async (req: Request, res: Response) => {
+const createURL = async (req: ExtendedRequest, res: Response) => {
   try {
-    const [title, url, tags] = req.body.params;
-    const submittedBy = req.body.userId;
+    const userId = req.auth.id;
+    const {title, url, tags} = req.body;
 
     if (!tags || tags.length === 0) {
       return res.status(400).json({ error: "Please add some tags to the URL" });
@@ -24,10 +26,10 @@ const createURL = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "URL already exists" });
     }
 
-    const newUrl = await Url.create({ title, url, submittedBy, tags });
+    const newUrl = await Url.create({ title, url, submittedBy: userId, tags });
 
     await TagControl.attachURL(tags, newUrl.id);
-    await UserControl.attachURL(submittedBy, newUrl.id);
+    await UserControl.attachURL(userId, newUrl.id);
 
     const receipt = await createReceipt(newUrl.url);
 

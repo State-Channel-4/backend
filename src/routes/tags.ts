@@ -1,6 +1,7 @@
 import express from "express";
-import { authenticate, verifySignedFunctionMessage } from "../middleware/auth";
+import { authenticate } from "../middleware/auth";
 import { tagControl } from "../controllers";
+import { ExtendedRequest } from "../types/request";
 
 const router = express.Router();
 
@@ -32,8 +33,7 @@ const router = express.Router();
 router.post(
     "/tag",
     authenticate,
-    verifySignedFunctionMessage,
-    tagControl.createTag
+    (req, res) => tagControl.createTag(req as ExtendedRequest, res)
   );
 
   /**

@@ -1,6 +1,7 @@
 import express from "express";
-import { authenticate, verifySignedFunctionMessage } from "../middleware/auth";
+import { authenticate } from "../middleware/auth";
 import { likeControl } from "../controllers";
+import { ExtendedRequest } from "../types/request";
 
 const router = express.Router();
 
@@ -26,7 +27,7 @@ const router = express.Router();
  */
 // get the likes of a user
 // @todo: add pagination
-router.get("/likes/:userId", likeControl.handleGetLikes);
+router.get("/likes/:userId", likeControl.getLikesFromUser);
 
 /**
  * @swagger
@@ -63,8 +64,7 @@ router.get("/likes/:userId", likeControl.handleGetLikes);
 router.put(
     "/like/:id",
     authenticate,
-    verifySignedFunctionMessage,
-    likeControl.handleLike
+    (req, res) => likeControl.handleLike(req as ExtendedRequest, res)
   );
 
 export default router;

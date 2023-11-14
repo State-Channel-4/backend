@@ -1,19 +1,20 @@
-import { Like, User, Url, URLDocument, LikeDocument, UserDocument } from '../models/schema';
 import { Request, Response } from 'express';
 import { Data } from '../types/typechain/Channel4';
 import { getEIPDomain } from './contract';
 import { ethers } from 'ethers';
+import { ExtendedRequest } from '../types/request';
+import { User, UserDocument } from '../models/users';
+import { URLDocument, Url } from '../models/urls';
+import { Like, LikeDocument } from '../models/likes';
 
 
-export const handleLike = async (req: Request, res: Response) => {
-    let url, liked, likeText;
+export const handleLike = async (req: ExtendedRequest, res: Response) => {
+    let likeText, urlId;
     try {
         // unmarshall variables from http request
-        const {
-            params: { id: urlId },
-            body: { params, userId },
-        } = req;
-        [url, liked] = params;
+        const userId = req.auth.id;
+        let { liked } = req.body;
+        urlId = req.params.id;
         const likeText = liked ? 'like' : 'dislike';
 
         // check user exists
@@ -28,7 +29,7 @@ export const handleLike = async (req: Request, res: Response) => {
         let content = await Url.findById(urlId);
         if (!content) {
             return res.status(404).json({
-                error: `Content ${url} doesn't exist as Channel 4 content`,
+                error: `Content ${urlId} doesn't exist as Channel 4 content`,
             });
         }
 
@@ -38,7 +39,7 @@ export const handleLike = async (req: Request, res: Response) => {
             // check that user is not trying to dislike content they have never liked
             if (liked == false) {
                 return res.status(400).json({
-                    error: `User '${userId}' cannot dislike content '${url}' they've never liked`,
+                    error: `User '${userId}' cannot dislike content '${urlId}' they've never liked`,
                 });
             }
             // if no existing like create and add to user's likes
@@ -49,7 +50,7 @@ export const handleLike = async (req: Request, res: Response) => {
             // check if like state is incorrect
             if (like.liked == liked) {
                 return res.status(400).json({
-                    error: `User '${userId}' has already ${likeText} '${url}'`,
+                    error: `User '${userId}' has already ${likeText} '${urlId}'`,
                 });
             }
             if (like.syncedToBlockchain == 0) {
@@ -69,7 +70,7 @@ export const handleLike = async (req: Request, res: Response) => {
         content.likes += liked ? 1 : -1;
         await content.save();
 
-        const receipt = await createReceipt(urlId, userId);
+        const receipt = await createReceipt(urlId, userId as unknown as string);
 
         return res.status(200).json({
             like,
@@ -78,13 +79,12 @@ export const handleLike = async (req: Request, res: Response) => {
     } catch (err) {
         console.error(err);
         return res.status(500).json({
-            error: `Failed to ${likeText} '${url}'`,
+            error: `Failed to ${likeText} '${urlId}'`,
         });
     }
-
 }
 
-export const handleGetLikes = async (req: Request, res: Response) => {
+export const getLikesOfUser = async (req: Request, res: Response) => {
     // unmarshall variables from http request
     const { params: { userId } } = req;
 
