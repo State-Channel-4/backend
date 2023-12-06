@@ -65,10 +65,10 @@ const deleteURL = async (req: Request, res: Response) => {
   }
 };
 
-const __getURLsFromDb = async (tags: string[], limit: number = 100) => {
+const __getURLsFromDb = async (tags: string[] | undefined, limit: number = 100) => {
   try {
     let query;
-    if (tags.length === 0) {
+    if (!tags) {
       query = Url.aggregate([{ $sample: { size: parseInt(limit.toString()) } }]);
     } else {
       // Get tag ids by tag names provided
