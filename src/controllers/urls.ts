@@ -9,13 +9,13 @@ import { ethers } from 'ethers';
 import { ExtendedRequest } from '../types/request';
 import { UserDocument } from '../models/users';
 import { Url } from '../models/urls';
-import { TagDocument } from '../models/tags';
+import { Tag, TagDocument } from '../models/tags';
 
 
 const createURL = async (req: ExtendedRequest, res: Response) => {
   try {
     const userId = req.auth.id;
-    const {title, url, tags} = req.body;
+    const { title, url, tags } = req.body;
 
     if (!tags || tags.length === 0) {
       return res.status(400).json({ error: "Please add some tags to the URL" });
@@ -65,19 +65,16 @@ const deleteURL = async (req: Request, res: Response) => {
   }
 };
 
-const __getURLsFromDb = async (tags: string[] | "all" = ["all"], limit: number = 100) => {
-  tags = Array.isArray(tags) ? tags : [tags];
-
+const __getURLsFromDb = async (tags: string[], limit: number = 100) => {
   try {
     let query;
-    if (tags.includes("all")) {
+    if (tags.length === 0) {
       query = Url.aggregate([{ $sample: { size: parseInt(limit.toString()) } }]);
     } else {
-      const userTagObjectIds = tags.map(
-        (tag) => new mongoose.Types.ObjectId(tag)
-      );
+      // Get tag ids by tag names provided
+      const tagIds = (await Tag.find({ name: { $in: tags } })).map(({ _id }) => _id);
       query = Url.aggregate([
-        { $match: { tags: { $in: userTagObjectIds } } },
+        { $match: { tags: { $in: tagIds } } },
         { $sample: { size: parseInt(limit.toString()) } },
       ]);
     }
