@@ -97,10 +97,13 @@ const getMixedURLs = async (req: Request, res: Response) => {
     const tags = req.query.tags as string[];
     const limit = parseInt(req.query.limit as string);
     const urls = await __getURLsFromDb(tags, limit);
-
-    res.status(200).json({
-      urls: shuffle(urls),
-    });
+    if (urls.length > 0) {
+      res.status(200).json({
+        urls: shuffle(urls),
+      });
+    } else {
+      res.status(404).json({ error: "No videos matching tag" })
+    }
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error while fetching mixed URLs" });
