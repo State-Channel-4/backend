@@ -69,7 +69,7 @@ export const detachURL = async (tags: Types.ObjectId[], urlId: Types.ObjectId) =
   }
 };
 
-export const getTagsToSync = async () : Promise<Data.TagToSyncStruct[]> => {
+export const getTagsToSync = async (): Promise<Data.TagToSyncStruct[]> => {
   const tags = await Tag.find({ syncedToBlockchain: false }).populate({
     path: 'createdBy',
     model: 'User',
