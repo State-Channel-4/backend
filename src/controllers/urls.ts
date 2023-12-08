@@ -1,17 +1,21 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import { Url } from '../models/schema';
 import { shuffle } from '../lib/utils';
 import * as TagControl from './tags';
 import * as UserControl from './users';
-import { UserDocument, TagDocument } from '../models/schema';
 import { Data } from '../types/typechain/Channel4';
+import { getEIPDomain } from './contract';
+import { ethers } from 'ethers';
+import { ExtendedRequest } from '../types/request';
+import { UserDocument } from '../models/users';
+import { Url } from '../models/urls';
+import { Tag, TagDocument } from '../models/tags';
 
 
-const createURL = async (req: Request, res: Response) => {
+const createURL = async (req: ExtendedRequest, res: Response) => {
   try {
-    const [title, url, tags] = req.body.params;
-    const submittedBy = req.body.userId;
+    const userId = req.auth.id;
+    const { title, url, tags } = req.body;
 
     if (!tags || tags.length === 0) {
       return res.status(400).json({ error: "Please add some tags to the URL" });
@@ -22,12 +26,17 @@ const createURL = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "URL already exists" });
     }
 
-    const newUrl = await Url.create({ title, url, submittedBy, tags });
+    const newUrl = await Url.create({ title, url, submittedBy: userId, tags });
 
     await TagControl.attachURL(tags, newUrl.id);
-    await UserControl.attachURL(submittedBy, newUrl.id);
+    await UserControl.attachURL(userId, newUrl.id);
 
-    return res.status(201).json(newUrl);
+    const receipt = await createReceipt(newUrl.url);
+
+    return res.status(201).json({
+      newUrl,
+      receipt,
+    });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "Server error" });
@@ -56,19 +65,16 @@ const deleteURL = async (req: Request, res: Response) => {
   }
 };
 
-const __getURLsFromDb = async (tags: string[] | "all" = ["all"], limit: number = 100) => {
-  tags = Array.isArray(tags) ? tags : [tags];
-
+const __getURLsFromDb = async (tags: string[] | undefined, limit: number = 100) => {
   try {
     let query;
-    if (tags.includes("all")) {
+    if (!tags) {
       query = Url.aggregate([{ $sample: { size: parseInt(limit.toString()) } }]);
     } else {
-      const userTagObjectIds = tags.map(
-        (tag) => new mongoose.Types.ObjectId(tag)
-      );
+      // Get tag ids by tag names provided
+      const tagIds = (await Tag.find({ name: { $in: tags } })).map(({ _id }) => _id);
       query = Url.aggregate([
-        { $match: { tags: { $in: userTagObjectIds } } },
+        { $match: { tags: { $in: tagIds } } },
         { $sample: { size: parseInt(limit.toString()) } },
       ]);
     }
@@ -91,10 +97,13 @@ const getMixedURLs = async (req: Request, res: Response) => {
     const tags = req.query.tags as string[];
     const limit = parseInt(req.query.limit as string);
     const urls = await __getURLsFromDb(tags, limit);
-
-    res.status(200).json({
-      urls: shuffle(urls),
-    });
+    if (urls.length > 0) {
+      res.status(200).json({
+        urls: shuffle(urls),
+      });
+    } else {
+      res.status(404).json({ error: "No videos matching tag" })
+    }
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error while fetching mixed URLs" });
@@ -129,6 +138,53 @@ const markSynced = async (urls: string[]) => {
     { url: { $in: urls } },
     { syncedToBlockchain: true }
   );
+};
+
+const getContentToSign = async (url: string): Promise<Data.ContentToLitigateStruct> => {
+  const content = await Url.findOne({ url }).populate({
+    path: "submittedBy",
+    model: "User",
+    select: "walletAddress",
+  }).populate({
+    path: "tags",
+    model: "Tag",
+    select: "name",
+  });
+  if (!content) throw new Error("Content to sign not found");
+  return {
+    title: content.title,
+    url: content.url,
+    submittedBy: (content.submittedBy as unknown as UserDocument).walletAddress,
+    likes: content.likes,
+    tagIds: (content.tags as unknown as TagDocument[]).map((tag) => {
+      return tag.name;
+    }),
+    timestamp: Math.floor(Date.now() / 1000),
+  };
+};
+
+const getUrlEIP712Metadata = async () => {
+  const domain = await getEIPDomain();
+  const types = {
+    ContentToLitigate: [
+      { name: 'title', type: 'string' },
+      { name: 'url', type: 'string' },
+      { name: 'submittedBy', type: 'address' },
+      { name: 'likes', type: 'uint256' },
+      { name: 'tagIds', type: 'string[]' },
+      { name: 'timestamp', type: 'uint256' },
+    ],
+  };
+  return { domain, types };
+};
+
+const createReceipt = async (newUrl: string): Promise<string> => {
+  const provider = new ethers.JsonRpcProvider(process.env.RPC_URL as string);
+  const wallet = new ethers.Wallet(process.env.PRIVATE_KEY as string, provider);
+  const content = await getContentToSign(newUrl);
+  const { domain, types } = await getUrlEIP712Metadata();
+  const EIPSignature = await wallet.signTypedData(domain, types, content);
+  return EIPSignature;
 };
 
 export {

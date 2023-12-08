@@ -4,8 +4,12 @@ dotenv.config({ path: __dirname+'/.env' });
 import cors from 'cors';
 import express from 'express';
 import mongoose from 'mongoose';
-import contractRoutes from './routes/contracts';
-
+import authRoutes from './routes/auth';
+import contractsRoutes from './routes/contracts';
+import likesRoutes from './routes/likes';
+import tagsRoutes from './routes/tags';
+import urlsRoutes from './routes/urls';
+import usersRoutes from './routes/users';
 
 // swagger imports
 import swaggerJsdoc from 'swagger-jsdoc';
@@ -27,7 +31,12 @@ app.use((req, res, next) => {
 const specs = swaggerJsdoc(swaggerOptions);
 
 // routes
-app.use('/api', contractRoutes);
+app.use('/api', authRoutes);
+app.use('/api', contractsRoutes);
+app.use('/api', likesRoutes);
+app.use('/api', tagsRoutes);
+app.use('/api', urlsRoutes);
+app.use('/api', usersRoutes);
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(specs, { explorer: true }));
 
 // connect to db

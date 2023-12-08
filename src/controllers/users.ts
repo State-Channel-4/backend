@@ -1,9 +1,10 @@
-const { generateToken } = require("../middleware/auth");
-const { User } = require("../models/schema");
 import { Request, Response } from 'express';
 import { Types } from 'mongoose';
-import { UserDocument, URLDocument } from '../models/schema';
 import { Data } from '../types/typechain/Channel4';
+import { getLikesFromUser } from './likes';
+import { User, UserDocument } from '../models/users';
+import { generateToken } from '../middleware/auth';
+import { URLDocument } from '../models/urls';
 
 
 export const createUser = async (req: Request, res: Response) => {
@@ -84,22 +85,26 @@ export const detachURL = async (userId: Types.ObjectId, urlId: Types.ObjectId) =
   }
 };
 
-export const getUsersToSync = async () : Promise<Data.UserStruct[]> => {
+export const getUsersToSync = async () : Promise<Data.UserToSyncStruct[]> => {
   const users: UserDocument[] = await User.find({ syncedToBlockchain: false }).populate({
     path: 'submittedUrls',
     model: 'Url',
   });
-  return users.map((user) => {
-    // TODO: save the contract index of each content
+  const usersToSync = [];
+  for (let i = 0, ni=users.length; i < ni; i++) {
+    const user = users[i];
     const submittedContent = (user.submittedUrls as unknown as URLDocument[]).map((_url, index) => index);
-    return {
+    const urlNonces = await getLikesFromUser(user._id);
+    usersToSync.push({
       userAddress: user.walletAddress,
       numberOfLikes: user.likedUrls.length,
       submittedContent: submittedContent,
       registeredAt: Math.floor(user.createdAt.getTime() / 1000),
       numberOfLikesInPeriod: 0,
-    };
-  });
+      urlNonces: urlNonces
+    });
+  }
+  return usersToSync;
 }
 
 export const markSynced = async (users: string[]) => {

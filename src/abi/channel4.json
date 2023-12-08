@@ -732,8 +732,8 @@
             "type": "uint256"
           }
         ],
-        "internalType": "struct Data.PendingToLitigate",
-        "name": "pending",
+        "internalType": "struct Data.LikeToLitigate",
+        "name": "likeToLitigate",
         "type": "tuple"
       },
       {
@@ -882,9 +882,31 @@
             "internalType": "uint256",
             "name": "numberOfLikesInPeriod",
             "type": "uint256"
+          },
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "url",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "nonce",
+                "type": "uint256"
+              },
+              {
+                "internalType": "bool",
+                "name": "liked",
+                "type": "bool"
+              }
+            ],
+            "internalType": "struct Data.UrlNonce[]",
+            "name": "urlNonces",
+            "type": "tuple[]"
           }
         ],
-        "internalType": "struct Data.User[]",
+        "internalType": "struct Data.UserToSync[]",
         "name": "usersToSync",
         "type": "tuple[]"
       },
@@ -923,6 +945,11 @@
             "type": "address"
           },
           {
+            "internalType": "uint256",
+            "name": "likes",
+            "type": "uint256"
+          },
+          {
             "internalType": "string[]",
             "name": "tagIds",
             "type": "string[]"
@@ -930,33 +957,6 @@
         ],
         "internalType": "struct Data.ContentToSync[]",
         "name": "contentsToAdd",
-        "type": "tuple[]"
-      },
-      {
-        "components": [
-          {
-            "internalType": "address",
-            "name": "submittedBy",
-            "type": "address"
-          },
-          {
-            "internalType": "string",
-            "name": "url",
-            "type": "string"
-          },
-          {
-            "internalType": "bool",
-            "name": "liked",
-            "type": "bool"
-          },
-          {
-            "internalType": "uint256",
-            "name": "nonce",
-            "type": "uint256"
-          }
-        ],
-        "internalType": "struct Data.Pending[]",
-        "name": "pendingActions",
         "type": "tuple[]"
       }
     ],
@@ -1079,8 +1079,8 @@
             "type": "uint256"
           }
         ],
-        "internalType": "struct Data.PendingToLitigate",
-        "name": "pending",
+        "internalType": "struct Data.LikeToLitigate",
+        "name": "like",
         "type": "tuple"
       },
       {
