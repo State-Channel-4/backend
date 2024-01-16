@@ -1,4 +1,5 @@
-import { URLDocument } from "../models/schema";
+import { URLDocument } from "../models/urls";
+
 export const shuffle = (array: URLDocument[]): URLDocument[] => {
   let currentIndex = array.length;
   let temporaryValue: URLDocument;
